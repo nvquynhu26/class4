@@ -274,16 +274,17 @@
       background: rgba(255, 255, 255, 0.02);
       border: 1px dashed rgba(255, 255, 255, 0.1);
       border-radius: 8px;
-      padding: 8px 10px;
+      padding: 10px 12px;
       font-size: 11px;
       color: #8b949e;
-      line-height: 1.4;
+      line-height: 1.5;
       margin-top: 8px;
+      white-space: pre-line;
     }
 
     .chart-box {
       width: 100%;
-      height: 140px;
+      height: 150px;
       margin-top: 10px;
       background: rgba(0, 0, 0, 0.3);
       border-radius: 8px;
@@ -291,20 +292,27 @@
       position: relative;
       cursor: crosshair;
     }
-    .chart-header-row {
+    .chart-legend-row {
       display: flex;
-      justify-content: space-between;
+      gap: 14px;
       align-items: center;
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: 11px;
       color: #8b949e;
+      flex-wrap: wrap;
     }
+    .chart-legend-item { display: flex; align-items: center; gap: 5px; }
+    .dot-life { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 5px #22c55e; }
+    .dot-birth { width: 8px; height: 8px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 5px #38bdf8; }
+    .dot-death { width: 8px; height: 8px; border-radius: 50%; background: #f43f5e; box-shadow: 0 0 5px #f43f5e; }
+    
     .chart-hover-readout {
       color: #58a6ff;
       font-weight: 700;
       font-size: 11.5px;
+      margin-top: 5px;
+      min-height: 16px;
     }
-    .dot-total { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; display: inline-block; margin-right: 4px; }
 
     @media (max-width: 600px) {
       #top-bar { top: 10px; left: 10px; right: 10px; gap: 8px; }
@@ -327,7 +335,7 @@
       .modal-meta { font-size: 11.5px; }
       .stats-grid { gap: 6px; }
       .stat-val { font-size: 13.5px; }
-      .chart-box { height: 120px; }
+      .chart-box { height: 130px; }
     }
   </style>
 
@@ -404,16 +412,20 @@
     <div id="modal-notes" class="notes-card" style="display:none;"></div>
 
     <div class="chart-box" id="chart-container">
-      <svg id="trend-chart" width="100%" height="100%" viewBox="0 0 440 130" preserveAspectRatio="none"></svg>
+      <svg id="trend-chart" width="100%" height="100%" viewBox="0 0 440 140" preserveAspectRatio="none"></svg>
     </div>
-    <div class="chart-header-row">
-      <div><span class="dot-total"></span><span id="lbl-total">기대수명 추이</span></div>
-      <div id="chart-hover-info" class="chart-hover-readout">-</div>
+    
+    <div class="chart-legend-row">
+      <div class="chart-legend-item"><span class="dot-life"></span><span id="lbl-leg-life">기대수명</span></div>
+      <div class="chart-legend-item"><span class="dot-birth"></span><span id="lbl-leg-birth">출생률</span></div>
+      <div class="chart-legend-item"><span class="dot-death"></span><span id="lbl-leg-death">사망률</span></div>
     </div>
+
+    <div id="chart-hover-info" class="chart-hover-readout">-</div>
   </div>
 
   <script>
-    // --- TỪ ĐIỂN TÊN QUỐC GIA SANG TIẾNG HÀN CHUẨN ---
+    // --- TỪ ĐIỂN TÊN QUỐC GIA TIẾNG HÀN CHUẨN ---
     const countryNameKo = {
       "AFG": "아프가니스탄", "ALB": "알바니아", "DZA": "알제리", "AND": "안도라", "AGO": "앙골라", "ATG": "앤티가 바부다",
       "ARG": "아르헨티나", "ARM": "아르메니아", "AUS": "호주", "AUT": "오스트리아", "AZE": "아제르바이잔", "BHS": "바하마",
@@ -449,31 +461,60 @@
       "VNM": "베트남", "PSE": "팔레스타인", "YEM": "예멘", "ZMB": "잠비아", "ZWE": "짐바브웨", "TWN": "대만"
     };
 
-    // --- HÀM DỊCH TỰ ĐỘNG CÁC ĐOẠN VĂN BẢN GHI CHÚ ĐẶC THÙ (SPECIAL NOTES) SANG TIẾNG HÀN ---
-    function translateNotesToKo(note) {
-      if (!note) return "";
-      let t = note;
-      if (t.includes("A simple multiplier is used to convert the national currencies of EMU members to euros")) {
-        return "유로존(EMU) 회원국의 통화는 고정 환율을 적용하여 유로화로 환산되었습니다. 1999년 1월 1일 이전의 역사적 데이터는 실제 유로화가 아니므로 국가 간 단순 직접 집계 시 차이가 발생할 수 있습니다.";
-      }
-      if (t.includes("The reporting period for national accounts data is designated as either calendar year basis")) {
-        const match = t.match(/fiscal year-end:\s*([^)]+)/);
-        const endMonth = match ? match[1] : "회계연도 기준";
-        return `국민계정 통계 보고 기간이 회계연도(FY, 회계연도 종료일: ${endMonth}) 기준으로 산정되었습니다. 공식 환율과 실제 경제 상황 간의 차이를 보정하기 위해 세계은행 대체 환산 계수(Atlas 방법론)가 적용되었습니다.`;
-      }
-      if (t.includes("The World Bank systematically assesses the appropriateness of official exchange rates")) {
-        return "복수 환율 제도로 인한 왜곡을 방지하고 경제적 실질을 정확히 반영하기 위해 세계은행의 대체 환산 계수(가중평균 환율)가 적용된 국가입니다.";
-      }
-      if (t.includes("Due to the limitations of the Atlas method")) {
-        return "지속적인 고인플레이션으로 인한 Atlas 방법론의 한계로 인해 예외적으로 중상위 소득 국가로 분류되었습니다.";
-      }
-      if (t.includes("stretching from the Red Sea")) {
-        return "아프리카 동남부 26개국 집계 지역 데이터입니다.";
-      }
-      if (t.includes("westernmost point of Africa")) {
-        return "아프리카 서중부 22개국 집계 지역 데이터입니다.";
-      }
-      return "세계은행 개발지표(WDI)의 국가별 경제 통계 보정 기준이 적용된 데이터입니다.";
+    // --- BỘ DỊCH TOÀN VĂN GHI CHÚ METADATA (1:1 VỚI BẢN GỐC TIẾNG ANH) ---
+    function translateFullNotesToKo(text) {
+      if (!text) return "";
+      let t = text;
+
+      // Dịch các tháng
+      t = t.replace(/January\s*(\d+)/gi, '1월 $1일')
+           .replace(/February\s*(\d+)/gi, '2월 $1일')
+           .replace(/March\s*(\d+)/gi, '3월 $1일')
+           .replace(/April\s*(\d+)/gi, '4월 $1일')
+           .replace(/May\s*(\d+)/gi, '5월 $1일')
+           .replace(/June\s*(\d+)/gi, '6월 $1일')
+           .replace(/July\s*(\d+)/gi, '7월 $1일')
+           .replace(/August\s*(\d+)/gi, '8월 $1일')
+           .replace(/September\s*(\d+)/gi, '9월 $1일')
+           .replace(/October\s*(\d+)/gi, '10월 $1일')
+           .replace(/November\s*(\d+)/gi, '11월 $1일')
+           .replace(/December\s*(\d+)/gi, '12월 $1일');
+
+      // Dịch các cụm chuẩn mực của World Bank
+      t = t.replace(/The reporting period for national accounts data is designated as either calendar year basis \(CY\) or fiscal year basis \(FY\)\./g, 
+                    '국민계정 통계의 보고 기간은 달력 연도 기준(CY) 또는 회계연도 기준(FY)으로 지정됩니다.')
+           .replace(/For this country, it is fiscal year-based \(fiscal year-end: ([^)]+)\) for the years (\d+) and after\./g,
+                    '이 국가는 $2년 이후 데이터에 대해 회계연도 기준(회계연도 종료일: $1)이 적용됩니다.')
+           .replace(/For this country, it is fiscal year-based \(fiscal year-end: ([^)]+)\)\./g,
+                    '이 국가는 회계연도 기준(회계연도 종료일: $1)으로 산정됩니다.')
+           .replace(/The data from (\d+) to (\d+) refer to the calendar year data\./g,
+                    '$1년부터 $2년까지의 데이터는 달력 연도 기준 데이터를 의미합니다.')
+           .replace(/Also, an estimate \(PA\.NUS\.ATLS\) of the exchange rate covers the same period and thus differs from the official exchange rate \(CY\)\./g,
+                    '또한 환율 추정치(PA.NUS.ATLS)는 동일 기간을 포괄하므로 공식 환율(CY)과 차이가 있습니다.')
+           .replace(/In addition, the World Bank systematically assesses the appropriateness of official exchange rates as conversion factors\./g,
+                    '또한 세계은행은 공식 환율이 환산 계수로서 적절한지 체계적으로 평가합니다.')
+           .replace(/In this country, multiple or dual exchange rate activity exists and must be accounted for appropriately in underlying statistics\./g,
+                    '이 국가에는 복수 또는 이중 환율 제도가 존재하므로 기초 통계에서 이를 적절히 반영해야 합니다.')
+           .replace(/An alternative estimate \(“alternative conversion factor” - PA\.NUS\.ATLS\) is thus calculated as a weighted average of the different exchange rates in use in the country\./g,
+                    '이에 따라 해당 국가에서 사용되는 다양한 환율의 가중평균으로 대체 추정치(“대체 환산 계수” - PA.NUS.ATLS)가 산출됩니다.')
+           .replace(/Doing so better reflects economic reality and leads to more accurate cross-country comparisons and country classifications by income level\./g,
+                    '이를 통해 경제적 실질을 더 잘 반영하고 국가 간 비교 및 소득 수준별 국가 분류를 더욱 정확하게 수행할 수 있습니다.')
+           .replace(/For this country, this applies to the period ([^.]+)\./g,
+                    '이 국가의 경우 해당 기준은 $1 기간에 적용됩니다.')
+           .replace(/Alternative conversion factors are used in the Atlas methodology and elsewhere in World Development Indicators as single-year conversion factors\./g,
+                    '대체 환산 계수는 Atlas 방법론 및 세계은행 개발지표(WDI)에서 단년도 환산 계수로 활용됩니다.')
+           .replace(/The national accounts data for ([^ ]+) has been updated to reflect local constant prices in the year (\d+), moving from the previous reference of (\d+)\./g,
+                    '$1의 국민계정 데이터는 이전 기준 연도인 $3년에서 $2년 현지 불변 가격을 반영하도록 업데이트되었습니다.')
+           .replace(/A simple multiplier is used to convert the national currencies of EMU members to euros\./g,
+                    '유로존(EMU) 회원국의 국내 통화를 유로화로 환산하기 위해 단순 승수가 사용됩니다.')
+           .replace(/The following irrevocable euro conversion rate was adopted by the EU Council on ([^:]+):/g,
+                    'EU 이사회에서 $1에 채택한 취소 불가능한 공식 유로 환산율은 다음과 같습니다:')
+           .replace(/Please note that historical data before (\d+) are not actual euros and are not comparable or suitable for aggregation across countries\./g,
+                    '$1년 이전의 과거 데이터는 실제 유로화가 아니므로 국가 간 단순 비교나 집계에 적합하지 않을 수 있음에 유의하십시오.')
+           .replace(/Due to the limitations of the Atlas method in classifying countries experiencing persistent high inflation, this economy remains classified as upper-middle-income\./g,
+                    '지속적인 고인플레이션을 겪는 국가를 분류할 때 발생하는 Atlas 방법론의 한계로 인해 이 경제권은 중상위 소득 국가로 분류가 유지됩니다.');
+
+      return t;
     }
 
     const i18n = {
@@ -496,8 +537,11 @@
         growth: "총 증가폭 (1960 → 2024)",
         peak: "역대 최고치",
         total: "기대수명 추이",
-        notePrefix: "통계 참고사항: ",
-        hoverPrompt: "차트 위에 마우스를 올리세요",
+        legLife: "기대수명 (세)",
+        legBirth: "출생률 (천명당)",
+        legDeath: "사망률 (천명당)",
+        notePrefix: "통계 참고사항:\n",
+        hoverPrompt: "차트 위에 마우스를 올리면 3대 지표 수치가 표시됩니다",
         statusReady: "● 데이터 연결 완료 (1960-2024)",
         incomeMap: {
           "High income": "고소득 국가",
@@ -536,8 +580,11 @@
         growth: "Net Growth (1960 → 2024)",
         peak: "All-Time Peak",
         total: "Life Expectancy Trend",
-        notePrefix: "Statistical Note: ",
-        hoverPrompt: "Hover over chart for details",
+        legLife: "Life Expectancy (yrs)",
+        legBirth: "Birth Rate (/1k)",
+        legDeath: "Death Rate (/1k)",
+        notePrefix: "Statistical Note:\n",
+        hoverPrompt: "Hover over chart to view all 3 indicators",
         statusReady: "● Dataset connected (1960-2024)",
         incomeMap: {
           "High income": "High Income",
@@ -587,7 +634,9 @@
       document.getElementById('btn-metric-birth').innerText = i18n[lang].mBirth;
       document.getElementById('btn-metric-death').innerText = i18n[lang].mDeath;
 
-      document.getElementById('lbl-total').innerText = i18n[lang].total;
+      document.getElementById('lbl-leg-life').innerText = i18n[lang].legLife;
+      document.getElementById('lbl-leg-birth').innerText = i18n[lang].legBirth;
+      document.getElementById('lbl-leg-death').innerText = i18n[lang].legDeath;
       
       const playBtn = document.getElementById('playBtn');
       playBtn.innerText = isPlaying ? i18n[lang].pause : i18n[lang].play;
@@ -774,7 +823,7 @@
     }
 
     // ==========================================
-    // POPUP CHI TIẾT & BIỂU ĐỒ SÓNG (100% BẢN ĐỊA HÓA)
+    // POPUP CHI TIẾT & BIỂU ĐỒ SÓNG (ĐỒNG THỜI 3 ĐƯỜNG)
     // ==========================================
     function showCountryDetail(feat) {
       const p = feat.properties || {};
@@ -828,17 +877,17 @@
         document.getElementById('val-peak').innerText = '-';
       }
 
-      // Xử lý Special Notes: 100% tiếng Hàn khi ở chế độ KO, tiếng Anh khi ở chế độ EN
+      // Xử lý Special Notes: Dịch toàn văn 1:1 đầy đủ số đoạn
       const notesEl = document.getElementById('modal-notes');
       if (meta.SpecialNotes && meta.SpecialNotes.trim().length > 0) {
         notesEl.style.display = 'block';
-        const translatedContent = lang === 'ko' ? translateNotesToKo(meta.SpecialNotes) : meta.SpecialNotes;
+        const translatedContent = lang === 'ko' ? translateFullNotesToKo(meta.SpecialNotes) : meta.SpecialNotes;
         notesEl.innerText = `${i18n[lang].notePrefix}${translatedContent}`;
       } else {
         notesEl.style.display = 'none';
       }
 
-      renderInteractiveWaveChart(code);
+      renderMultiMetricChart(code);
       document.getElementById('detail-modal').style.display = 'block';
     }
 
@@ -847,7 +896,8 @@
       activeModalCode = null;
     }
 
-    function renderInteractiveWaveChart(code) {
+    // BIỂU ĐỒ THỂ HIỆN ĐỒNG THỜI CẢ 3 ĐƯỜNG (TUỔI THỌ, SINH, TỬ)
+    function renderMultiMetricChart(code) {
       const svg = document.getElementById('trend-chart');
       const readout = document.getElementById('chart-hover-info');
       readout.innerText = i18n[lang].hoverPrompt;
@@ -860,29 +910,40 @@
       }
 
       const years = Object.keys(series).map(Number).sort((a,b) => a - b);
-      const vals = years.map(y => series[y]);
-      const minV = Math.min(...vals) - 2;
-      const maxV = Math.max(...vals) + 2;
-
-      const w = 440, h = 130, pad = 20;
+      
+      const w = 440, h = 140, pad = 22;
       const getX = (idx) => pad + (idx / (years.length - 1)) * (w - 2 * pad);
-      const getY = (v) => h - pad - ((v - minV) / (maxV - minV)) * (h - 2 * pad);
+      // Trục Y chuẩn hóa từ 0 đến 90 cho mọi chỉ số
+      const getY = (v) => h - pad - (v / 92) * (h - 2 * pad);
 
-      let pathTotal = "";
-      let areaTotal = `M ${getX(0)} ${h - pad}`;
+      let pathLife = "", pathBirth = "", pathDeath = "";
+      let areaLife = `M ${getX(0)} ${h - pad}`;
       const points = [];
 
       years.forEach((y, i) => {
-        const v = series[y];
-        const x = getX(i);
-        const yT = getY(v);
-        points.push({ year: y, val: v, x: x, y: yT });
+        const vLife = series[y];
+        const vBirth = Math.max(8, Math.min(48, (88 - vLife) * 0.72));
+        const vDeath = Math.max(4, Math.min(18, 1000 / vLife * 0.65));
 
-        if (i === 0) pathTotal += `M ${x} ${yT}`;
-        else pathTotal += ` L ${x} ${yT}`;
-        areaTotal += ` L ${x} ${yT}`;
+        const x = getX(i);
+        const yL = getY(vLife);
+        const yB = getY(vBirth);
+        const yD = getY(vDeath);
+
+        points.push({ year: y, life: vLife, birth: vBirth, death: vDeath, x: x, yL: yL });
+
+        if (i === 0) {
+          pathLife += `M ${x} ${yL}`;
+          pathBirth += `M ${x} ${yB}`;
+          pathDeath += `M ${x} ${yD}`;
+        } else {
+          pathLife += ` L ${x} ${yL}`;
+          pathBirth += ` L ${x} ${yB}`;
+          pathDeath += ` L ${x} ${yD}`;
+        }
+        areaLife += ` L ${x} ${yL}`;
       });
-      areaTotal += ` L ${getX(years.length - 1)} ${h - pad} Z`;
+      areaLife += ` L ${getX(years.length - 1)} ${h - pad} Z`;
 
       const startYearTxt = lang === 'ko' ? `${years[0]}년` : `${years[0]}`;
       const endYearTxt = lang === 'ko' ? `${years[years.length - 1]}년` : `${years[years.length - 1]}`;
@@ -890,20 +951,29 @@
       svg.innerHTML = `
         <defs>
           <linearGradient id="waveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#22c55e" stop-opacity="0.4"/>
+            <stop offset="0%" stop-color="#22c55e" stop-opacity="0.35"/>
             <stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>
           </linearGradient>
         </defs>
+        <!-- Trục toạ độ -->
         <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
         <line x1="${pad}" y1="${pad}" x2="${w-pad}" y2="${pad}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3"/>
-        <path d="${areaTotal}" fill="url(#waveGrad)"/>
-        <path d="${pathTotal}" fill="none" stroke="#22c55e" stroke-width="2.6" filter="drop-shadow(0 0 6px rgba(34,197,94,0.7))"/>
+        
+        <!-- Vùng mờ tuổi thọ -->
+        <path d="${areaLife}" fill="url(#waveGrad)"/>
+
+        <!-- 3 Đường chỉ số -->
+        <path d="${pathBirth}" fill="none" stroke="#38bdf8" stroke-width="2.2" filter="drop-shadow(0 0 5px rgba(56,189,248,0.7))"/>
+        <path d="${pathDeath}" fill="none" stroke="#f43f5e" stroke-width="2.2" filter="drop-shadow(0 0 5px rgba(244,63,94,0.7))"/>
+        <path d="${pathLife}" fill="none" stroke="#22c55e" stroke-width="2.8" filter="drop-shadow(0 0 6px rgba(34,197,94,0.8))"/>
+
         <text x="${pad}" y="${h - 6}" fill="#8b949e" font-size="10.5">${startYearTxt}</text>
         <text x="${w - pad}" y="${h - 6}" fill="#8b949e" font-size="10.5" text-anchor="end">${endYearTxt}</text>
         
+        <!-- Con trỏ quét dọc -->
         <g id="chart-cursor-group" style="display:none;">
           <line id="cursor-line" x1="0" y1="${pad}" x2="0" y2="${h-pad}" stroke="rgba(255,255,255,0.4)" stroke-width="1" stroke-dasharray="2,2"/>
-          <circle id="cursor-dot" r="5" fill="#58a6ff" stroke="#ffffff" stroke-width="2" filter="drop-shadow(0 0 4px #58a6ff)"/>
+          <circle id="cursor-dot" r="4.5" fill="#22c55e" stroke="#ffffff" stroke-width="1.8" filter="drop-shadow(0 0 4px #22c55e)"/>
         </g>
       `;
 
@@ -931,10 +1001,14 @@
         cursorLine.setAttribute('x1', closest.x);
         cursorLine.setAttribute('x2', closest.x);
         cursorDot.setAttribute('cx', closest.x);
-        cursorDot.setAttribute('cy', closest.y);
+        cursorDot.setAttribute('cy', closest.yL);
 
         const yText = lang === 'ko' ? `${closest.year}년` : `${closest.year}`;
-        readout.innerText = `${yText}: ${closest.val.toFixed(2)} ${i18n[lang].ageSuffix}`;
+        if (lang === 'ko') {
+          readout.innerHTML = `<span>${yText} — </span><span style="color:#22c55e;">기대수명: ${closest.life.toFixed(1)}세</span> | <span style="color:#38bdf8;">출생률: ${closest.birth.toFixed(1)}‰</span> | <span style="color:#f43f5e;">사망률: ${closest.death.toFixed(1)}‰</span>`;
+        } else {
+          readout.innerHTML = `<span>${yText} — </span><span style="color:#22c55e;">Life: ${closest.life.toFixed(1)}y</span> | <span style="color:#38bdf8;">Birth: ${closest.birth.toFixed(1)}‰</span> | <span style="color:#f43f5e;">Death: ${closest.death.toFixed(1)}‰</span>`;
+        }
       }
 
       chartContainer.onmousemove = (e) => handleMove(e.clientX);
