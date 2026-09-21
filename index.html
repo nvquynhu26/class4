@@ -173,7 +173,7 @@
     }
   </style>
 
-  <!-- Bộ thư viện chuẩn -->
+  <!-- Bộ thư viện chuẩn CDN -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.28.3/dist/globe.gl.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3-dsv@3.0.1/dist/d3-dsv.min.js"></script>
@@ -195,8 +195,8 @@
   <div id="controls" class="glass-panel">
     <div class="slider-row">
       <button id="playBtn" class="btn-play">▶ 재생</button>
-      <input type="range" id="yearSlider" min="1950" max="2023" step="1" value="2023">
-      <div id="year-display">2023</div>
+      <input type="range" id="yearSlider" min="1950" max="2024" step="1" value="2024">
+      <div id="year-display">2024</div>
     </div>
     
     <div class="legend-row">
@@ -240,7 +240,7 @@
     };
 
     let lang = 'ko';
-    let currentYear = 2023;
+    let currentYear = 2024; // Cập nhật mặc định 2024
     let lifeDataByYear = {};
     let lifeDataByName = {};
     let geoFeatures = [];
@@ -261,15 +261,14 @@
       playBtn.innerText = isPlaying ? i18n[lang].pause : i18n[lang].play;
     }
 
-    // --- HÀM TÍNH MÀU THUẦN JS (KHÔNG PHỤ THUỘC D3) ---
-    // Đi qua các mốc: 25(Đỏ) -> 45(Cam) -> 60(Vàng) -> 72(Xanh lá nhạt) -> 80(Xanh lục) -> 85(Xanh dương)
+    // --- HÀM NỘI SUY MÀU THUẦN JS ---
     const colorStops = [
-      { val: 25, r: 215, g: 25,  b: 28  }, // #d7191c
-      { val: 45, r: 253, g: 174, b: 97  }, // #fdae61
-      { val: 60, r: 255, g: 255, b: 191 }, // #ffffbf
-      { val: 72, r: 166, g: 217, b: 106 }, // #a6d96a
-      { val: 80, r: 26,  g: 150, b: 65  }, // #1a9641
-      { val: 85, r: 43,  g: 131, b: 186 }  // #2b83ba
+      { val: 25, r: 215, g: 25,  b: 28  }, // Đỏ
+      { val: 45, r: 253, g: 174, b: 97  }, // Cam
+      { val: 60, r: 255, g: 255, b: 191 }, // Vàng
+      { val: 72, r: 166, g: 217, b: 106 }, // Xanh lá nhạt
+      { val: 80, r: 26,  g: 150, b: 65  }, // Xanh lá đậm
+      { val: 85, r: 43,  g: 131, b: 186 }  // Xanh dương
     ];
 
     function interpolateColor(val) {
@@ -292,7 +291,7 @@
       return '#2b313e';
     }
 
-    // Tra cứu giá trị tuổi thọ của quốc gia
+    // Tra cứu tuổi thọ (hỗ trợ cả mã ISO lẫn tên đầy đủ)
     function getCountryValue(feat) {
       const p = feat.properties || {};
       const codes = [p.ISO_A3, p.ADM0_A3, p.GU_A3, p.ISO_A3_EH, feat.id].filter(c => c && c !== '-99');
@@ -304,7 +303,6 @@
         }
       }
 
-      // Fallback tìm theo tên nếu mã ISO bị thiếu
       const nameObj = lifeDataByName[currentYear];
       if (nameObj) {
         const names = [p.NAME, p.ADMIN, p.SOVEREIGNT, p.NAME_LONG].filter(Boolean);
@@ -318,12 +316,12 @@
     function calculateCapColor(feat) {
       const val = getCountryValue(feat);
       if (val === null || val === undefined) {
-        return 'rgba(43, 49, 62, 0.85)'; // Màu xám tối khi không có số liệu
+        return '#2b313e'; // Màu xám chuẩn
       }
-      return interpolateColor(val); // Màu RGB rực rỡ theo tuổi thọ
+      return interpolateColor(val);
     }
 
-    // --- KHỞI TẠO QUẢ CẦU ---
+    // --- KHỞI TẠO QUẢ CẦU 3D ---
     const container = document.getElementById('globeViz');
     const world = Globe()(container)
       .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
@@ -333,7 +331,7 @@
       .polygonAltitude(0.015)
       .polygonSideColor(() => 'rgba(10, 10, 20, 0.4)')
       .polygonStrokeColor(() => 'rgba(255, 255, 255, 0.25)')
-      .polygonCapColor(calculateCapColor)
+      .polygonCapColor(d => d.__color || '#2b313e')
       .polygonLabel(feat => {
         const p = feat.properties || {};
         const name = p.NAME || p.ADMIN || 'Unknown';
@@ -355,10 +353,10 @@
       .onPolygonHover(hoverD => {
         world
           .polygonAltitude(d => d === hoverD ? 0.05 : 0.015)
-          .polygonCapColor(d => d === hoverD ? '#ffffff' : calculateCapColor(d));
+          .polygonCapColor(d => d === hoverD ? '#ffffff' : (d.__color || '#2b313e'));
       });
 
-    // --- TỐC ĐỘ XOAY ÊM DỊU ---
+    // Tự xoay Trái Đất chậm êm dịu
     const controls = world.controls();
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.2;
@@ -368,7 +366,7 @@
     // Trục nghiêng 23.5 độ
     world.scene().rotation.z = (23.5 * Math.PI) / 180;
 
-    // --- BACKGROUND VŨ TRỤ CHUYỂN ĐỘNG SIÊU CHẬM ---
+    // Background vũ trụ chuyển động siêu chậm
     const galaxySphereGeo = new THREE.SphereGeometry(900, 32, 32);
     const galaxyTexture = new THREE.TextureLoader().load('galaxy.jpg');
     const galaxyMaterial = new THREE.MeshBasicMaterial({
@@ -387,13 +385,18 @@
       world.width(window.innerWidth).height(window.innerHeight);
     });
 
-    // --- HÀM ÉP RENDER LẠI TOÀN BỘ MÀU TỨC THÌ ---
-    function triggerColorUpdate() {
-      // Truyền một instance function mới ép Globe.gl giải phóng cache vật liệu cũ
-      world.polygonCapColor(d => calculateCapColor(d));
+    // --- HÀM CẬP NHẬT MÀU ĐẢM BẢO TÍNH TOÁN VÀ ĐỔI MÀU TỨC THÌ ---
+    function updateGlobeColors() {
+      if (!geoFeatures.length) return;
+      // Gán màu trực tiếp vào thuộc tính của polygon
+      geoFeatures.forEach(feat => {
+        feat.__color = calculateCapColor(feat);
+      });
+      // Gọi polygonCapColor với hàm lấy trực tiếp màu đã tính để ép render vật liệu
+      world.polygonCapColor(d => d.__color);
     }
 
-    // --- TẢI DỮ LIỆU ---
+    // --- TẢI DỮ LIỆU ĐỊA LÝ VÀ CSV ---
     const statusBadge = document.getElementById('status-badge');
 
     Promise.all([
@@ -401,7 +404,7 @@
       fetch('life-expectancy.csv').then(r => r.text())
     ]).then(([geoData, csvText]) => {
       const parsed = d3.csvParse(csvText);
-      let minYear = 2023, maxYear = 1950;
+      let minYear = 2024, maxYear = 1950;
 
       parsed.forEach(row => {
         const y = parseInt(row.Year);
@@ -420,16 +423,24 @@
         }
       });
 
+      // Tự động gán mốc năm lớn nhất trong file CSV
+      currentYear = maxYear;
+
       const slider = document.getElementById('yearSlider');
       slider.min = minYear;
       slider.max = maxYear;
       slider.value = currentYear;
+      document.getElementById('year-display').innerText = currentYear;
 
       geoFeatures = geoData.features;
+      // Gán màu ban đầu
+      geoFeatures.forEach(feat => {
+        feat.__color = calculateCapColor(feat);
+      });
+
+      // Đẩy dữ liệu vào quả cầu và kích hoạt màu ngay
       world.polygonsData(geoFeatures);
-      
-      // Kích hoạt tô màu ngay khi nạp xong
-      triggerColorUpdate();
+      world.polygonCapColor(d => d.__color);
 
       statusBadge.innerText = i18n[lang].statusReady;
     }).catch(err => {
@@ -447,7 +458,7 @@
       currentYear = parseInt(val);
       slider.value = currentYear;
       yearDisplay.innerText = currentYear;
-      triggerColorUpdate();
+      updateGlobeColors();
     }
 
     slider.addEventListener('input', (e) => updateYear(e.target.value));
