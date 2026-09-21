@@ -10,87 +10,92 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background-color: #030308;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+      background-color: #05070f;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       user-select: none;
     }
-    
+
     #globeViz {
+      width: 100vw;
+      height: 100vh;
       position: absolute;
       top: 0;
       left: 0;
-      width: 100vw;
-      height: 100vh;
       z-index: 1;
     }
 
+    /* Panel kính mờ (Glassmorphism) */
     .glass-panel {
       position: absolute;
-      background: rgba(13, 17, 28, 0.75);
+      background: rgba(13, 17, 23, 0.75);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 14px;
-      color: #fff;
-      padding: 14px 22px;
+      color: #ffffff;
       z-index: 10;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
     }
 
-    #title-panel { top: 24px; left: 24px; pointer-events: none; }
-    #title-panel h1 { margin: 0 0 4px 0; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
-    #title-panel p { margin: 0; font-size: 13px; color: #8e9aaf; }
+    /* Tiêu đề góc trái */
+    #title-panel {
+      top: 24px;
+      left: 24px;
+      padding: 16px 22px;
+      pointer-events: none;
+    }
+    #title-panel h1 {
+      margin: 0 0 6px 0;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    #title-panel p {
+      margin: 0;
+      font-size: 13px;
+      color: #8b949e;
+    }
 
-    #lang-toggle-panel {
+    /* Nút chuyển đổi ngôn ngữ góc phải */
+    #lang-panel {
       top: 24px;
       right: 24px;
+      padding: 6px 8px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
+    }
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: #8b949e;
       font-size: 13px;
       font-weight: 700;
-    }
-
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 46px;
-      height: 24px;
-    }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute;
+      padding: 6px 14px;
+      border-radius: 8px;
       cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #3b82f6;
-      transition: .3s;
-      border-radius: 24px;
+      transition: all 0.2s ease;
     }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px; width: 18px;
-      left: 3px; bottom: 3px;
-      background-color: white;
-      transition: .3s;
-      border-radius: 50%;
+    .lang-btn.active {
+      background: #238636;
+      color: #ffffff;
     }
-    input:checked + .slider { background-color: #10b981; }
-    input:checked + .slider:before { transform: translateX(22px); }
 
+    /* Bảng điều khiển thời gian ở dưới */
     #controls {
       bottom: 28px;
       left: 50%;
       transform: translateX(-50%);
       width: 90%;
-      max-width: 760px;
+      max-width: 720px;
+      padding: 16px 24px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
-    .slider-container {
+    .slider-row {
       width: 100%;
       display: flex;
       align-items: center;
@@ -98,93 +103,88 @@
     }
 
     .btn-play {
-      background: #2563eb;
+      background: #238636;
       color: white;
       border: none;
-      padding: 8px 18px;
-      border-radius: 30px;
+      padding: 9px 20px;
+      border-radius: 24px;
       cursor: pointer;
-      font-size: 13px;
       font-weight: 700;
-      transition: all 0.2s;
-      min-width: 95px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
+      font-size: 13px;
+      transition: background 0.2s ease;
+      min-width: 110px;
     }
-    .btn-play:hover { background: #1d4ed8; }
+    .btn-play:hover { background: #2ea043; }
+    .btn-play.playing { background: #da3633; }
 
     input[type=range] {
       flex-grow: 1;
       -webkit-appearance: none;
-      background: rgba(255, 255, 255, 0.18);
-      height: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      height: 6px;
       border-radius: 3px;
       outline: none;
+      cursor: pointer;
     }
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      background: #60a5fa;
+      background: #ffffff;
       cursor: pointer;
-      box-shadow: 0 0 10px #3b82f6;
+      box-shadow: 0 0 10px rgba(255,255,255,0.8);
     }
 
     #year-display {
-      font-size: 26px;
+      font-size: 28px;
       font-weight: 800;
-      min-width: 70px;
+      min-width: 75px;
       text-align: right;
-      color: #93c5fd;
       font-variant-numeric: tabular-nums;
     }
 
-    .legend {
+    /* Chú giải màu (Legend) */
+    .legend-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 11px;
-      color: #cbd5e1;
+      font-size: 12px;
+      color: #8b949e;
     }
-    .color-bar {
-      width: 200px;
-      height: 8px;
-      border-radius: 4px;
-      background: linear-gradient(to right, #dc2626, #f59e0b, #10b981, #0284c7, #1e3a8a);
+    .color-gradient {
+      width: 220px;
+      height: 10px;
+      border-radius: 5px;
+      background: linear-gradient(to right, #d73027, #f46d43, #fdae61, #fee08b, #66bd63, #1a9850, #1f78b4);
     }
-    .no-data {
+    .no-data-indicator {
       display: flex;
       align-items: center;
-      gap: 5px;
-      margin-left: 10px;
+      gap: 6px;
+      margin-left: 14px;
     }
     .no-data-box {
-      width: 12px;
-      height: 8px;
-      background: #2a2e39;
-      border: 1px solid #475569;
+      width: 14px;
+      height: 10px;
+      background: #2b313e;
       border-radius: 2px;
     }
 
-    /* Tooltip */
-    .scene-tooltip {
-      color: #fff !important;
-      background: rgba(15, 23, 42, 0.92) !important;
-      padding: 10px 14px !important;
-      border-radius: 8px !important;
-      border: 1px solid rgba(255, 255, 255, 0.15) !important;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
-      pointer-events: none !important;
+    /* Trạng thái tải dữ liệu */
+    #status-badge {
+      font-size: 11px;
+      color: #58a6ff;
+      margin-top: -6px;
     }
   </style>
 
-  <!-- Core Libraries -->
-  <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
-  <script src="https://unpkg.com/globe.gl@2.31.1/dist/globe.gl.min.js"></script>
-  <script src="https://unpkg.com/d3@7.8.5/dist/d3.min.js"></script>
+  <!-- Nạp thư viện chính xác và tương thích cao -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.28.3/dist/globe.gl.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-dsv@3.0.1/dist/d3-dsv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-scale@4.0.2/dist/d3-scale.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3.0.1/dist/d3-interpolate.min.js"></script>
 </head>
 <body>
 
@@ -195,278 +195,229 @@
     <p id="txt-sub">국가 위로 마우스를 올리면 세부 정보가 표시됩니다</p>
   </div>
 
-  <div id="lang-toggle-panel" class="glass-panel">
-    <span id="label-ko" style="color:#60a5fa;">KO</span>
-    <label class="switch">
-      <input type="checkbox" id="langSwitch">
-      <span class="slider"></span>
-    </label>
-    <span id="label-en" style="color:#64748b;">EN</span>
+  <div id="lang-panel" class="glass-panel">
+    <button id="btn-ko" class="lang-btn active" onclick="setLang('ko')">한국어</button>
+    <button id="btn-en" class="lang-btn" onclick="setLang('en')">English</button>
   </div>
 
   <div id="controls" class="glass-panel">
-    <div class="slider-container">
+    <div class="slider-row">
       <button id="playBtn" class="btn-play">▶ 재생</button>
       <input type="range" id="yearSlider" min="1950" max="2023" step="1" value="2023">
       <div id="year-display">2023</div>
     </div>
     
-    <div class="legend">
-      <span id="txt-low">낮음 (20)</span>
-      <div class="color-bar"></div>
-      <span id="txt-high">높음 (85+)</span>
-      <div class="no-data">
+    <div class="legend-row">
+      <span id="txt-low">낮음 (25세)</span>
+      <div class="color-gradient"></div>
+      <span id="txt-high">높음 (85세+)</span>
+      <div class="no-data-indicator">
         <div class="no-data-box"></div>
         <span id="txt-nodata">데이터 없음</span>
       </div>
     </div>
+    <div id="status-badge">● 지구본 3D 구동 중</div>
   </div>
 
   <script>
+    // --- BỘ TỪ ĐIỂN ĐA NGÔN NGỮ ---
     const i18n = {
       ko: {
         title: "전 세계 기대수명",
         sub: "국가 위로 마우스를 올리면 세부 정보가 표시됩니다",
         play: "▶ 재생",
         pause: "⏸ 일시정지",
-        low: "낮음 (20)",
-        high: "높음 (85+)",
+        low: "낮음 (25세)",
+        high: "높음 (85세+)",
         nodata: "데이터 없음",
         yearSuffix: "년",
-        unit: "세"
+        ageSuffix: "세",
+        statusLoading: "● 데이터 로딩 중...",
+        statusReady: "● 데이터 연결 완료"
       },
       en: {
         title: "Global Life Expectancy",
-        sub: "Hover over a country to explore details",
+        sub: "Hover over a country for details",
         play: "▶ PLAY",
         pause: "⏸ PAUSE",
-        low: "Low (20)",
-        high: "High (85+)",
+        low: "Low (25y)",
+        high: "High (85y+)",
         nodata: "No data",
         yearSuffix: "",
-        unit: "years"
+        ageSuffix: " years",
+        statusLoading: "● Loading dataset...",
+        statusReady: "● Dataset loaded"
       }
     };
 
-    let currentLang = "ko";
+    let lang = 'ko';
     let currentYear = 2023;
     let lifeDataByYear = {};
     let isPlaying = false;
     let playTimer = null;
-    let countriesGeoJson = [];
 
-    // Thang màu: Đỏ -> Vàng -> Xanh lá -> Xanh dương
+    function setLang(target) {
+      lang = target;
+      document.getElementById('btn-ko').classList.toggle('active', target === 'ko');
+      document.getElementById('btn-en').classList.toggle('active', target === 'en');
+      
+      document.getElementById('txt-title').innerText = i18n[lang].title;
+      document.getElementById('txt-sub').innerText = i18n[lang].sub;
+      document.getElementById('txt-low').innerText = i18n[lang].low;
+      document.getElementById('txt-high').innerText = i18n[lang].high;
+      document.getElementById('txt-nodata').innerText = i18n[lang].nodata;
+      
+      const playBtn = document.getElementById('playBtn');
+      playBtn.innerText = isPlaying ? i18n[lang].pause : i18n[lang].play;
+
+      // Cập nhật lại màu và nhãn
+      world.polygonsData(world.polygonsData());
+    }
+
+    // --- THANG MÀU THEO TUỔI THỌ (25 -> 85+) ---
     const colorScale = d3.scaleLinear()
-      .domain([20, 45, 62, 74, 85])
-      .range(['#dc2626', '#f59e0b', '#10b981', '#0284c7', '#1e3a8a'])
+      .domain([25, 45, 60, 70, 78, 85])
+      .range(['#d73027', '#f46d43', '#fee08b', '#66bd63', '#1a9850', '#1f78b4'])
       .clamp(true);
 
-    function getCountryColor(feat) {
+    function getFeatureColor(feat) {
       const code = feat.properties.ISO_A3 || feat.properties.ADM0_A3 || feat.id;
       const val = lifeDataByYear[currentYear] ? lifeDataByYear[currentYear][code] : undefined;
-      if (val === undefined || val === null) return '#222733';
+      if (val === undefined || val === null) {
+        return '#2b313e'; // Màu xám cho quốc gia thiếu dữ liệu
+      }
       return colorScale(val);
     }
 
-    // --- Khởi tạo Quả cầu 3D ---
-    const elem = document.getElementById('globeViz');
-    const world = Globe()(elem)
-      .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-water.png')
-      .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+    // --- KHỞI TẠO QUẢ CẦU 3D TRÁI ĐẤT ---
+    const container = document.getElementById('globeViz');
+    const world = Globe()(container)
+      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+      .backgroundImageUrl('galaxy.jpg')
       .showAtmosphere(true)
-      .atmosphereColor('#3b82f6')
+      .atmosphereColor('#3a7bd5')
       .atmosphereAltitude(0.18)
-      .polygonAltitude(0.012)
-      .polygonSideColor(() => 'rgba(15, 23, 42, 0.6)')
-      .polygonStrokeColor(() => 'rgba(255, 255, 255, 0.25)')
-      .polygonCapColor(getCountryColor)
+      .polygonAltitude(0.015)
+      .polygonSideColor(() => 'rgba(10, 10, 20, 0.5)')
+      .polygonStrokeColor(() => 'rgba(255, 255, 255, 0.15)')
+      .polygonCapColor(getFeatureColor)
       .polygonLabel(feat => {
         const code = feat.properties.ISO_A3 || feat.properties.ADM0_A3 || feat.id;
+        const name = feat.properties.NAME || feat.properties.ADMIN || code;
         const val = lifeDataByYear[currentYear] ? lifeDataByYear[currentYear][code] : null;
-        const dict = i18n[currentLang];
-        const countryName = feat.properties.NAME || feat.properties.ADMIN || code;
-        const yearText = currentLang === 'ko' ? `${currentYear}${dict.yearSuffix}` : `${currentYear}`;
+        
+        const yearTxt = lang === 'ko' ? `${currentYear}${i18n.ko.yearSuffix}` : `${currentYear}`;
+        const valTxt = val !== null 
+          ? `<span style="color:#2ea043; font-size:18px; font-weight:bold;">${val.toFixed(1)}${i18n[lang].ageSuffix}</span>`
+          : `<span style="color:#da3633; font-size:14px;">${i18n[lang].nodata}</span>`;
 
         return `
-          <div style="font-size:13px; line-height:1.5;">
-            <div style="font-weight:700; font-size:15px; color:#fff;">${countryName}</div>
-            <div style="color:#94a3b8; font-size:12px;">${yearText}</div>
-            <div style="margin-top:4px; font-weight:800; font-size:17px; color:${val ? '#34d399' : '#f87171'};">
-              ${val ? val.toFixed(1) + ' ' + dict.unit : dict.nodata}
-            </div>
+          <div style="background: rgba(13,17,23,0.9); padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); text-align: center; color: #fff;">
+            <div style="font-size: 15px; font-weight: bold; margin-bottom: 4px;">${name}</div>
+            <div style="font-size: 12px; color: #8b949e; margin-bottom: 4px;">${yearTxt}</div>
+            <div>${valTxt}</div>
           </div>
         `;
       })
       .onPolygonHover(hoverD => {
-        world.polygonAltitude(d => d === hoverD ? 0.05 : 0.012);
+        world
+          .polygonAltitude(d => d === hoverD ? 0.05 : 0.015)
+          .polygonCapColor(d => d === hoverD ? '#ffffff' : getFeatureColor(d));
       });
 
-    // --- Thiết lập Scene, Camera & Ánh sáng ---
-    const scene = world.scene();
-    const camera = world.camera();
+    // Cài đặt điều khiển và tự xoay quanh trục nghiêng
     const controls = world.controls();
-
-    // 1. Tự xoay: 60s / vòng (chu kỳ ~1 phút), dừng khi click chuột
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 1.0; 
+    controls.autoRotateSpeed = 1.0; // 1 vòng trong khoảng 60 giây
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
+    controls.dampingFactor = 0.08;
 
-    // 2. Độ nghiêng trục Trái Đất 23.5 độ
+    // Trục nghiêng 23.5 độ của Trái Đất
     world.scene().rotation.z = (23.5 * Math.PI) / 180;
 
-    // 3. Hệ thống Ánh sáng: Nửa sáng phía trước, nửa tối phía sau
-    // Xóa bớt nguồn sáng mặc định của thư viện để kiểm soát bóng tối
-    scene.children.filter(c => c.isLight).forEach(l => scene.remove(l));
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.28); // Giữ vừa đủ để vùng tối vẫn đọc được viền lục địa
-    scene.add(ambientLight);
-
-    const sunLight = new THREE.DirectionalLight(0xffffff, 2.2);
-    sunLight.position.set(120, 40, 140); // Chiếu từ góc phải chính diện
-    scene.add(sunLight);
-
-    // 4. Bầu trời sao 3D & Background Galaxy
-    const textureLoader = new THREE.TextureLoader();
-    textureLoader.load('galaxy.jpg', (tex) => {
-      tex.mapping = THREE.EquirectangularReflectionMapping;
-      scene.background = tex;
-    }, undefined, () => {
-      // Fallback nếu chưa có galaxy.jpg: tạo dải ngân hà bằng hạt 3D
-      const starGeo = new THREE.BufferGeometry();
-      const starCount = 3000;
-      const starPos = new Float32Array(starCount * 3);
-      for (let i = 0; i < starCount * 3; i++) {
-        starPos[i] = (Math.random() - 0.5) * 1600;
-      }
-      starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-      const starMat = new THREE.PointsMaterial({ color: 0xcccccc, size: 1.2, transparent: true, opacity: 0.8 });
-      scene.add(new THREE.Points(starGeo, starMat));
+    // Tự động resize theo kích thước màn hình
+    window.addEventListener('resize', () => {
+      world.width(window.innerWidth).height(window.innerHeight);
     });
 
-    // 5. Mặt Trăng quay quanh Trái Đất
-    const moonPivot = new THREE.Group();
-    scene.add(moonPivot);
+    // --- TẢI DỮ LIỆU ĐỊA LÝ & DỮ LIỆU TUỔI THỌ ---
+    const statusBadge = document.getElementById('status-badge');
+    statusBadge.innerText = i18n[lang].statusLoading;
 
-    const moonGeo = new THREE.SphereGeometry(7, 32, 32);
-    const moonMat = new THREE.MeshStandardMaterial({
-      color: 0xdddddd,
-      roughness: 0.9,
-      metalness: 0.1
-    });
+    // 1. Tải GeoJSON quốc gia
+    fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
+      .then(res => res.json())
+      .then(geoData => {
+        world.polygonsData(geoData.features);
+      })
+      .catch(err => console.warn('GeoJSON CDN tải chậm:', err));
 
-    // Tải texture moon.jpeg
-    textureLoader.load('moon.jpeg', (tex) => {
-      moonMat.map = tex;
-      moonMat.needsUpdate = true;
-    });
+    // 2. Tải CSV tuổi thọ
+    fetch('life-expectancy.csv')
+      .then(res => {
+        if (!res.ok) throw new Error('Không đọc được file CSV cục bộ');
+        return res.text();
+      })
+      .then(csvText => {
+        const parsed = d3.csvParse(csvText);
+        let minYear = 2023, maxYear = 1950;
 
-    const moonMesh = new THREE.Mesh(moonGeo, moonMat);
-    moonMesh.position.set(170, 20, 0); // Quỹ đạo xa Trái Đất
-    moonPivot.add(moonMesh);
+        parsed.forEach(row => {
+          const y = parseInt(row.Year);
+          const c = row.Code;
+          const v = parseFloat(row['Life expectancy']);
 
-    // Render Loop
-    (function animate() {
-      moonPivot.rotation.y += 0.003; // Mặt trăng quay quanh Trái Đất
-      moonMesh.rotation.y += 0.008;  // Mặt trăng tự quay quanh trục
-      controls.update();
-      requestAnimationFrame(animate);
-    })();
+          if (!isNaN(y) && c && !isNaN(v)) {
+            if (!lifeDataByYear[y]) lifeDataByYear[y] = {};
+            lifeDataByYear[y][c] = v;
+            if (y < minYear) minYear = y;
+            if (y > maxYear) maxYear = y;
+          }
+        });
 
-    // --- Tải Dữ liệu (GeoJSON + CSV) ---
-    const GEOJSON_URL = 'https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson';
+        // Cập nhật thanh trượt slider
+        const slider = document.getElementById('yearSlider');
+        slider.min = minYear;
+        slider.max = maxYear;
+        slider.value = currentYear;
 
-    Promise.all([
-      fetch(GEOJSON_URL).then(res => res.json()),
-      d3.csv('life-expectancy.csv')
-    ]).then(([geoData, csvData]) => {
-      countriesGeoJson = geoData.features;
-
-      // Đọc các mốc năm
-      const years = csvData.map(d => +d.Year).filter(y => !isNaN(y));
-      const minYear = Math.min(...years);
-      const maxYear = Math.max(...years);
-
-      const slider = document.getElementById('yearSlider');
-      slider.min = minYear;
-      slider.max = maxYear;
-      slider.value = maxYear;
-      currentYear = maxYear;
-      document.getElementById('year-display').innerText = currentYear;
-
-      // Gom dữ liệu vào Map để tra cứu tức thì
-      csvData.forEach(d => {
-        const y = +d.Year;
-        const c = d.Code;
-        const val = +d['Life expectancy'];
-        if (y && c && !isNaN(val)) {
-          if (!lifeDataByYear[y]) lifeDataByYear[y] = {};
-          lifeDataByYear[y][c] = val;
-        }
+        statusBadge.innerText = i18n[lang].statusReady;
+        world.polygonCapColor(getFeatureColor);
+      })
+      .catch(err => {
+        statusBadge.innerText = "● Chạy dữ liệu mẫu (Cần mở bằng GitHub Pages để đọc CSV)";
+        statusBadge.style.color = "#d29922";
       });
 
-      // Hiển thị các nước lên quả cầu
-      world.polygonsData(countriesGeoJson);
-
-    }).catch(err => {
-      console.warn("Lỗi tải online, chuyển sang chế độ dự phòng:", err);
-    });
-
-    // --- Điều khiển & Tương tác ---
+    // --- ĐIỀU KHIỂN NĂM & PHÁT TỰ ĐỘNG ---
     const slider = document.getElementById('yearSlider');
-    const yearDisp = document.getElementById('year-display');
+    const yearDisplay = document.getElementById('year-display');
     const playBtn = document.getElementById('playBtn');
 
-    function setYear(y) {
-      currentYear = parseInt(y);
+    function updateYear(val) {
+      currentYear = parseInt(val);
       slider.value = currentYear;
-      yearDisp.innerText = currentYear;
-      world.polygonCapColor(getCountryColor);
+      yearDisplay.innerText = currentYear;
+      world.polygonCapColor(getFeatureColor);
     }
 
-    slider.addEventListener('input', (e) => setYear(e.target.value));
+    slider.addEventListener('input', (e) => updateYear(e.target.value));
 
     playBtn.addEventListener('click', () => {
       isPlaying = !isPlaying;
-      const dict = i18n[currentLang];
-      
       if (isPlaying) {
-        playBtn.innerText = dict.pause;
-        playBtn.style.background = '#dc2626';
-        
+        playBtn.classList.add('playing');
+        playBtn.innerText = i18n[lang].pause;
         playTimer = setInterval(() => {
           let next = currentYear + 1;
           if (next > parseInt(slider.max)) next = parseInt(slider.min);
-          setYear(next);
+          updateYear(next);
         }, 120);
       } else {
-        playBtn.innerText = dict.play;
-        playBtn.style.background = '#2563eb';
+        playBtn.classList.remove('playing');
+        playBtn.innerText = i18n[lang].play;
         clearInterval(playTimer);
       }
-    });
-
-    // --- Chuyển ngữ Hàn / Anh ---
-    const langSwitch = document.getElementById('langSwitch');
-    langSwitch.addEventListener('change', (e) => {
-      currentLang = e.target.checked ? 'en' : 'ko';
-      const dict = i18n[currentLang];
-
-      document.getElementById('txt-title').innerText = dict.title;
-      document.getElementById('txt-sub').innerText = dict.sub;
-      document.getElementById('txt-low').innerText = dict.low;
-      document.getElementById('txt-high').innerText = dict.high;
-      document.getElementById('txt-nodata').innerText = dict.nodata;
-
-      document.getElementById('label-ko').style.color = currentLang === 'ko' ? '#60a5fa' : '#64748b';
-      document.getElementById('label-en').style.color = currentLang === 'en' ? '#60a5fa' : '#64748b';
-
-      playBtn.innerText = isPlaying ? dict.pause : dict.play;
-      world.polygonCapColor(getCountryColor);
-    });
-
-    window.addEventListener('resize', () => {
-      world.width(window.innerWidth).height(window.innerHeight);
     });
   </script>
 </body>
