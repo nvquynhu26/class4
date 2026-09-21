@@ -189,7 +189,7 @@
       margin-top: -4px;
     }
 
-    /* Modal Chi tiết khi Click */
+    /* Modal Chi tiết */
     #detail-modal {
       display: none;
       top: 50%;
@@ -259,25 +259,28 @@
 
     .chart-box {
       width: 100%;
-      height: 140px;
+      height: 150px;
       margin-top: 12px;
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(0, 0, 0, 0.3);
       border-radius: 10px;
       padding: 8px;
       position: relative;
+      cursor: crosshair;
     }
-    .chart-legend {
+    .chart-header-row {
       display: flex;
-      gap: 14px;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
       font-size: 11px;
       color: #8b949e;
-      margin-top: 6px;
-      justify-content: flex-end;
     }
-    .chart-legend-item { display: flex; align-items: center; gap: 5px; }
-    .dot-female { width: 8px; height: 8px; border-radius: 50%; background: #f43f5e; box-shadow: 0 0 6px #f43f5e; }
-    .dot-male { width: 8px; height: 8px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 6px #38bdf8; }
-    .dot-total { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .chart-hover-readout {
+      color: #58a6ff;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .dot-total { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; display: inline-block; margin-right: 4px; }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
@@ -299,7 +302,6 @@
   </div>
 
   <div id="controls" class="glass-panel">
-    <!-- 3 Nút chọn chỉ số: Đổi hoàn toàn theo ngôn ngữ -->
     <div class="metric-toggle-group">
       <button id="btn-metric-life" class="metric-btn active" onclick="setMetric('life')">기대수명</button>
       <button id="btn-metric-birth" class="metric-btn" onclick="setMetric('birth')">출생률</button>
@@ -332,7 +334,7 @@
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div id="lbl-curr-val" class="stat-label">현재 수치 (2024)</div>
+        <div id="lbl-curr-val" class="stat-label">기준년도 수치 (2024)</div>
         <div id="val-current" class="stat-val">-</div>
       </div>
       <div class="stat-card">
@@ -340,24 +342,23 @@
         <div id="val-income" class="stat-val" style="font-size:13.5px; color:#e6edf3;">-</div>
       </div>
       <div class="stat-card">
-        <div id="lbl-growth" class="stat-label">총 성장치 (1960 → 2024)</div>
+        <div id="lbl-growth" class="stat-label">총 증가폭 (1960 → 2024)</div>
         <div id="val-growth" class="stat-val" style="color:#2ea043;">-</div>
       </div>
       <div class="stat-card">
-        <div id="lbl-peak" class="stat-label">역대 최고 기록</div>
+        <div id="lbl-peak" class="stat-label">역대 최고치</div>
         <div id="val-peak" class="stat-val" style="color:#f59e0b;">-</div>
       </div>
     </div>
 
     <div id="modal-notes" class="notes-card" style="display:none;"></div>
 
-    <div class="chart-box">
-      <svg id="trend-chart" width="100%" height="100%" viewBox="0 0 420 120" preserveAspectRatio="none"></svg>
+    <div class="chart-box" id="chart-container">
+      <svg id="trend-chart" width="100%" height="100%" viewBox="0 0 440 130" preserveAspectRatio="none"></svg>
     </div>
-    <div class="chart-legend">
-      <div class="chart-legend-item"><span class="dot-female"></span><span id="lbl-female">여성</span></div>
-      <div class="chart-legend-item"><span class="dot-total"></span><span id="lbl-total">전체</span></div>
-      <div class="chart-legend-item"><span class="dot-male"></span><span id="lbl-male">남성</span></div>
+    <div class="chart-header-row">
+      <div><span class="dot-total"></span><span id="lbl-total">기대수명 추이</span></div>
+      <div id="chart-hover-info" class="chart-hover-readout">-</div>
     </div>
   </div>
 
@@ -381,9 +382,9 @@
         income: "소득 분류",
         growth: "총 증가폭 (1960 → 2024)",
         peak: "역대 최고치",
-        female: "여성 (추정)",
-        male: "남성 (추정)",
-        total: "전체",
+        total: "기대수명 추이",
+        notePrefix: "통계 참고사항: ",
+        hoverPrompt: "차트 위에 마우스를 올리세요",
         statusReady: "● 데이터 연결 완료 (1960-2024)",
         incomeMap: {
           "High income": "고소득 국가",
@@ -398,7 +399,8 @@
           "Europe & Central Asia": "유럽 및 중앙아시아",
           "East Asia & Pacific": "동아시아 및 태평양",
           "South Asia": "남아시아",
-          "North America": "북미"
+          "North America": "북미",
+          "Global": "전 세계"
         }
       },
       en: {
@@ -419,9 +421,9 @@
         income: "Income Group",
         growth: "Net Growth (1960 → 2024)",
         peak: "All-Time Peak",
-        female: "Female (est.)",
-        male: "Male (est.)",
-        total: "Total",
+        total: "Life Expectancy Trend",
+        notePrefix: "Statistical Note: ",
+        hoverPrompt: "Hover over chart for details",
         statusReady: "● Dataset connected (1960-2024)",
         incomeMap: {
           "High income": "High Income",
@@ -436,7 +438,8 @@
           "Europe & Central Asia": "Europe & Central Asia",
           "East Asia & Pacific": "East Asia & Pacific",
           "South Asia": "South Asia",
-          "North America": "North America"
+          "North America": "North America",
+          "Global": "Global"
         }
       }
     };
@@ -449,6 +452,7 @@
     let geoFeatures = [];
     let isPlaying = false;
     let playTimer = null;
+    let activeModalCode = null;
 
     function setLang(target) {
       lang = target;
@@ -457,18 +461,21 @@
       document.getElementById('txt-title').innerText = i18n[lang].title;
       document.getElementById('txt-sub').innerText = i18n[lang].sub;
       
-      // Đổi tên 3 nút chỉ số
       document.getElementById('btn-metric-life').innerText = i18n[lang].mLife;
       document.getElementById('btn-metric-birth').innerText = i18n[lang].mBirth;
       document.getElementById('btn-metric-death').innerText = i18n[lang].mDeath;
 
-      document.getElementById('lbl-female').innerText = i18n[lang].female;
-      document.getElementById('lbl-male').innerText = i18n[lang].male;
       document.getElementById('lbl-total').innerText = i18n[lang].total;
       
       const playBtn = document.getElementById('playBtn');
       playBtn.innerText = isPlaying ? i18n[lang].pause : i18n[lang].play;
       updateLegendUI();
+
+      if (activeModalCode) {
+        // Cập nhật lại modal nếu đang mở
+        const feat = geoFeatures.find(f => (f.properties.ISO_A3 || f.properties.ADM0_A3 || f.id) === activeModalCode);
+        if (feat) showCountryDetail(feat);
+      }
     }
 
     function setMetric(metric) {
@@ -626,7 +633,6 @@
     const galaxySky = new THREE.Mesh(galaxySphereGeo, galaxyMaterial);
     world.scene().add(galaxySky);
 
-    // BACKGROUND GALAXY: GIẢM CHẬM THÊM 5 LẦN (TĨNH LẶNG TUYỆT ĐỐI)
     (function animateSpace() {
       galaxySky.rotation.y += 0.0000024;
       requestAnimationFrame(animateSpace);
@@ -645,16 +651,17 @@
     }
 
     // ==========================================
-    // POPUP CHI TIẾT ĐA DỮ LIỆU TỪ METADATA
+    // POPUP CHI TIẾT & BIỂU ĐỒ SÓNG CÓ TƯƠNG TÁC CHUỘT
     // ==========================================
     function showCountryDetail(feat) {
       const p = feat.properties || {};
       const code = p.ISO_A3 || p.ADM0_A3 || feat.id;
+      activeModalCode = code;
       const name = p.NAME || p.ADMIN || code;
       const meta = countryMetadata[code] || {};
       
       const rawRegion = meta.Region || p.REGION_UN || 'Global';
-      const rawIncome = meta.IncomeGroup || 'Not Classified';
+      const rawIncome = meta.IncomeGroup || (lang === 'ko' ? '분류 없음' : 'Not Classified');
       
       const regionText = (i18n[lang].regionMap && i18n[lang].regionMap[rawRegion]) || rawRegion;
       const incomeText = (i18n[lang].incomeMap && i18n[lang].incomeMap[rawIncome]) || rawIncome;
@@ -671,7 +678,6 @@
       const suffix = currentMetric === 'life' ? i18n[lang].ageSuffix : i18n[lang].rateSuffix;
       document.getElementById('val-current').innerText = currVal ? `${currVal.toFixed(1)}${suffix}` : i18n[lang].nodata;
 
-      // Tính toán Net Growth và Peak All-time
       const series = timeSeriesByCode[code];
       if (series) {
         const years = Object.keys(series).map(Number).sort((a,b) => a - b);
@@ -691,90 +697,128 @@
             peakYr = y;
           }
         });
-        document.getElementById('val-peak').innerText = `${peakVal.toFixed(1)}${i18n[lang].ageSuffix} (${peakYr})`;
+        const peakYearText = lang === 'ko' ? `${peakYr}년` : `${peakYr}`;
+        document.getElementById('val-peak').innerText = `${peakVal.toFixed(1)}${i18n[lang].ageSuffix} (${peakYearText})`;
       } else {
         document.getElementById('val-growth').innerText = '-';
         document.getElementById('val-peak').innerText = '-';
       }
 
-      // Trích xuất ghi chú đặc thù (SpecialNotes) từ metadata nếu có
       const notesEl = document.getElementById('modal-notes');
       if (meta.SpecialNotes && meta.SpecialNotes.trim().length > 0) {
         notesEl.style.display = 'block';
-        notesEl.innerText = `Note: ${meta.SpecialNotes}`;
+        notesEl.innerText = `${i18n[lang].notePrefix}${meta.SpecialNotes}`;
       } else {
         notesEl.style.display = 'none';
       }
 
-      drawWaveChart(code);
+      renderInteractiveWaveChart(code);
       document.getElementById('detail-modal').style.display = 'block';
     }
 
     function closeModal() {
       document.getElementById('detail-modal').style.display = 'none';
+      activeModalCode = null;
     }
 
-    function drawWaveChart(code) {
+    // Biểu đồ sóng SVG chỉ thể hiện 1 đường Total thực tế kèm Cursor quét chuột
+    function renderInteractiveWaveChart(code) {
       const svg = document.getElementById('trend-chart');
+      const readout = document.getElementById('chart-hover-info');
+      readout.innerText = i18n[lang].hoverPrompt;
       svg.innerHTML = '';
 
       const series = timeSeriesByCode[code];
       if (!series) {
-        svg.innerHTML = `<text x="210" y="65" fill="#8b949e" text-anchor="middle" font-size="13">${i18n[lang].nodata}</text>`;
+        svg.innerHTML = `<text x="220" y="70" fill="#8b949e" text-anchor="middle" font-size="13">${i18n[lang].nodata}</text>`;
         return;
       }
 
       const years = Object.keys(series).map(Number).sort((a,b) => a - b);
       const vals = years.map(y => series[y]);
-      const minV = Math.min(...vals) - 3;
-      const maxV = Math.max(...vals) + 3;
+      const minV = Math.min(...vals) - 2;
+      const maxV = Math.max(...vals) + 2;
 
-      const w = 420, h = 120, pad = 20;
+      const w = 440, h = 130, pad = 24;
       const getX = (idx) => pad + (idx / (years.length - 1)) * (w - 2 * pad);
       const getY = (v) => h - pad - ((v - minV) / (maxV - minV)) * (h - 2 * pad);
 
-      let pathTotal = "", pathFemale = "", pathMale = "";
+      let pathTotal = "";
       let areaTotal = `M ${getX(0)} ${h - pad}`;
+      const points = [];
 
       years.forEach((y, i) => {
         const v = series[y];
-        const vF = v + 3.8;
-        const vM = Math.max(20, v - 3.8);
-
         const x = getX(i);
         const yT = getY(v);
-        const yF = getY(vF);
-        const yM = getY(vM);
+        points.push({ year: y, val: v, x: x, y: yT });
 
-        if (i === 0) {
-          pathTotal += `M ${x} ${yT}`;
-          pathFemale += `M ${x} ${yF}`;
-          pathMale += `M ${x} ${yM}`;
-        } else {
-          pathTotal += ` L ${x} ${yT}`;
-          pathFemale += ` L ${x} ${yF}`;
-          pathMale += ` L ${x} ${yM}`;
-        }
+        if (i === 0) pathTotal += `M ${x} ${yT}`;
+        else pathTotal += ` L ${x} ${yT}`;
         areaTotal += ` L ${x} ${yT}`;
       });
       areaTotal += ` L ${getX(years.length - 1)} ${h - pad} Z`;
 
+      const startYearTxt = lang === 'ko' ? `${years[0]}년` : `${years[0]}`;
+      const endYearTxt = lang === 'ko' ? `${years[years.length - 1]}년` : `${years[years.length - 1]}`;
+
       svg.innerHTML = `
         <defs>
           <linearGradient id="waveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#22c55e" stop-opacity="0.35"/>
+            <stop offset="0%" stop-color="#22c55e" stop-opacity="0.4"/>
             <stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>
           </linearGradient>
         </defs>
-        <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
         <line x1="${pad}" y1="${pad}" x2="${w-pad}" y2="${pad}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3"/>
         <path d="${areaTotal}" fill="url(#waveGrad)"/>
-        <path d="${pathFemale}" fill="none" stroke="#f43f5e" stroke-width="1.8" stroke-dasharray="4,3" opacity="0.85"/>
-        <path d="${pathMale}" fill="none" stroke="#38bdf8" stroke-width="1.8" stroke-dasharray="4,3" opacity="0.85"/>
-        <path d="${pathTotal}" fill="none" stroke="#22c55e" stroke-width="2.5" filter="drop-shadow(0 0 5px rgba(34,197,94,0.6))"/>
-        <text x="${pad}" y="${h - 5}" fill="#8b949e" font-size="10">${years[0]}</text>
-        <text x="${w - pad}" y="${h - 5}" fill="#8b949e" font-size="10" text-anchor="end">${years[years.length - 1]}</text>
+        <path d="${pathTotal}" fill="none" stroke="#22c55e" stroke-width="2.6" filter="drop-shadow(0 0 6px rgba(34,197,94,0.7))"/>
+        <text x="${pad}" y="${h - 6}" fill="#8b949e" font-size="10.5">${startYearTxt}</text>
+        <text x="${w - pad}" y="${h - 6}" fill="#8b949e" font-size="10.5" text-anchor="end">${endYearTxt}</text>
+        
+        <!-- Đường dóng và điểm quét khi hover chuột -->
+        <g id="chart-cursor-group" style="display:none;">
+          <line id="cursor-line" x1="0" y1="${pad}" x2="0" y2="${h-pad}" stroke="rgba(255,255,255,0.4)" stroke-width="1" stroke-dasharray="2,2"/>
+          <circle id="cursor-dot" r="5" fill="#58a6ff" stroke="#ffffff" stroke-width="2" filter="drop-shadow(0 0 4px #58a6ff)"/>
+        </g>
       `;
+
+      // Xử lý sự kiện di chuột quét biểu đồ
+      const chartContainer = document.getElementById('chart-container');
+      const cursorGroup = document.getElementById('chart-cursor-group');
+      const cursorLine = document.getElementById('cursor-line');
+      const cursorDot = document.getElementById('cursor-dot');
+
+      chartContainer.onmousemove = function(e) {
+        const rect = svg.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const svgX = (mouseX / rect.width) * w;
+
+        // Tìm điểm dữ liệu gần nhất với tọa độ chuột
+        let closest = points[0];
+        let minDiff = Math.abs(svgX - closest.x);
+        for (let i = 1; i < points.length; i++) {
+          const diff = Math.abs(svgX - points[i].x);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closest = points[i];
+          }
+        }
+
+        cursorGroup.style.display = 'block';
+        cursorLine.setAttribute('x1', closest.x);
+        cursorLine.setAttribute('x2', closest.x);
+        cursorDot.setAttribute('cx', closest.x);
+        cursorDot.setAttribute('cy', closest.y);
+
+        const yText = lang === 'ko' ? `${closest.year}년` : `${closest.year}`;
+        readout.innerText = `${yText}: ${closest.val.toFixed(2)} ${i18n[lang].ageSuffix}`;
+      };
+
+      chartContainer.onmouseleave = function() {
+        cursorGroup.style.display = 'none';
+        readout.innerText = i18n[lang].hoverPrompt;
+      };
     }
 
     // ==========================================
@@ -788,7 +832,6 @@
       fetch('Metadata_Country_API_SP.DYN.LE00.IN_DS2_en_csv_v2_399797.csv').then(r => r.text()).catch(() => "")
     ]).then(([geoData, csvLife, csvMetaCountry]) => {
       
-      // Parse Metadata mở rộng (Region, IncomeGroup, SpecialNotes)
       if (csvMetaCountry) {
         const metaRows = d3.csvParse(csvMetaCountry);
         metaRows.forEach(r => {
@@ -838,7 +881,7 @@
       statusBadge.innerText = i18n[lang].statusReady;
     }).catch(err => {
       console.error(err);
-      statusBadge.innerText = "● Hãy tải qua GitHub Pages để nạp đầy đủ dữ liệu";
+      statusBadge.innerText = "● GitHub Pages를 통해 접속하면 정상 구동됩니다";
       statusBadge.style.color = "#d29922";
     });
 
