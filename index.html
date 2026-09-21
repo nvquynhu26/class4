@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Global Life Expectancy 3D</title>
+  <style>
+    body { margin: 0; padding: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    /* Giao diện overlay mờ (Glassmorphism) */
+    .glass-panel {
+      position: absolute;
+      background: rgba(20, 25, 35, 0.65);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: white;
+      padding: 15px 25px;
+      z-index: 10;
+    }
+
+    #title-panel {
+      top: 20px;
+      left: 20px;
+    }
+    #title-panel h1 { margin: 0 0 5px 0; font-size: 22px; }
+    #title-panel p { margin: 0; font-size: 14px; color: #aaa; }
+
+    #controls {
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .slider-container {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    /* Tùy chỉnh thanh trượt */
+    input[type=range] {
+      flex-grow: 1;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.2);
+      height: 6px;
+      border-radius: 3px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255,255,255,0.8);
+    }
+
+    .btn-play {
+      background: #4caf50;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .btn-play:hover { background: #45a049; }
+
+    #year-display {
+      font-size: 32px;
+      font-weight: bold;
+      min-width: 80px;
+      text-align: right;
+    }
+
+    /* Thang màu chú giải (Legend) */
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    .color-bar {
+      width: 250px;
+      height: 12px;
+      border-radius: 6px;
+      background: linear-gradient(to right, #d7191c, #fdae61, #a6d96a, #1a9641, #053061);
+    }
+    .no-data {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: 15px;
+    }
+    .no-data-box {
+      width: 15px;
+      height: 12px;
+      background: #2a2e39;
+      border: 1px solid #555;
+      border-radius: 2px;
+    }
+
+    /* Tooltip */
+    .scene-tooltip {
+      color: white !important;
+      background: rgba(0, 0, 0, 0.8) !important;
+      padding: 10px 15px !important;
+      border-radius: 8px !important;
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+      font-family: inherit !important;
+    }
+  </style>
+
+  <!-- Nạp thư viện -->
+  <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/globe.gl@2.31.1/dist/globe.gl.min.js"></script>
+  <script src="https://unpkg.com/d3@7.8.5/dist/d3.min.js"></script>
+</head>
+<body>
+
+  <div id="globeViz"></div>
+
+  <div id="title-panel" class="glass-panel">
+    <h1>Global Life Expectancy</h1>
+    <p>Di chuột vào quốc gia để xem chi tiết</p>
+  </div>
+
+  <div id="controls" class="glass-panel">
+    <div class="slider-container">
+      <button id="playBtn" class="btn-play">▶ PLAY</button>
+      <input type="range" id="yearSlider" min="1950" max="2023" step="1" value="2023">
+      <div id="year-display">2023</div>
+    </div>
+    
+    <div class="legend">
+      <span>Thấp (20)</span>
+      <div class="color-bar"></div>
+      <span>Cao (85+)</span>
+      <div class="no-data">
+        <div class="no-data-box"></div>
+        <span>Không có dữ liệu</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentYear = 2023;
+    let lifeDataByYear = {}; // Lưu trữ dữ liệu tối ưu: { year: { ISO_CODE: value } }
+    let playing = false;
+    let playInterval;
+
+    // Thiết lập thang màu D3: Đỏ -> Vàng -> Xanh lá -> Xanh dương
+    const colorScale = d3.scaleLinear()
+      .domain([20, 45, 65, 75, 85])
+      .range(['#d7191c', '#fdae61', '#a6d96a', '#1a9641', '#053061'])
+      .clamp(true);
+
+    // Lấy màu cho quốc gia
+    function getCountryColor(feat) {
+      // GeoJSON sử dụng mã ISO-A3 (tương đương cột Code trong CSV)
+      const isoCode = feat.properties.ISO_A3 || feat.properties.ADM0_A3;
+      const val = lifeDataByYear[currentYear] ? lifeDataByYear[currentYear][isoCode] : undefined;
+      
+      if (val === undefined || val === null) {
+        return '#2a2e39'; // Màu xám cho quốc gia không có dữ liệu
+      }
+      return colorScale(val);
+    }
+
+    // Khởi tạo Quả cầu 3D
+    const world = Globe()(document.getElementById('globeViz'))
+      .backgroundImageUrl('galaxy.jpg')
+      .showAtmosphere(true)
+      .atmosphereColor('#4169E1') // Xanh khí quyển
+      .atmosphereAltitude(0.15)
+      .polygonAltitude(0.015)
+      .polygonSideColor(() => 'rgba(0,0,0,0.4)')
+      .polygonStrokeColor(() => '#000000') // Viền đen phân cách các nước
+      .polygonLabel(feat => {
+        const isoCode = feat.properties.ISO_A3 || feat.properties.ADM0_A3;
+        const val = lifeDataByYear[currentYear] ? lifeDataByYear[currentYear][isoCode] : null;
+        
+        return `
+          <div style="text-align:center;">
+            <b style="font-size:16px;">${feat.properties.NAME}</b><br/>
+            <span style="font-size:14px; color:#ddd;">Năm ${currentYear}</span><br/>
+            <span style="font-size:18px; color: ${val ? '#4caf50' : '#ff4444'}; font-weight:bold;">
+              ${val ? val.toFixed(1) + ' tuổi' : 'Chưa có dữ liệu'}
+            </span>
+          </div>
+        `;
+      })
+      .onPolygonHover(hoverD => world
+        .polygonAltitude(d => d === hoverD ? 0.08 : 0.015)
+        .polygonCapColor(d => d === hoverD ? '#ffffff' : getCountryColor(d))
+      );
+
+    // Cấu hình Three.js (Ánh sáng, Mặt Trăng)
+    const scene = world.scene();
+    
+    // 1. Chỉnh ánh sáng để tạo góc sáng/tối
+    // Xóa ánh sáng mặc định của Globe (nếu có) và thiết lập nguồn sáng mới
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.15); // Rất tối để mặt sau chìm vào bóng tối
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5); // Ánh sáng mặt trời mạnh
+    directionalLight.position.set(100, 30, 50); // Chiếu từ góc phải phía trước
+    world.lights([ambientLight, directionalLight]);
+
+    // 2. Thêm Mặt Trăng
+    const moonGroup = new THREE.Group();
+    scene.add(moonGroup); // Gắn vào scene để quay quanh tâm Trái Đất
+
+    const moonGeometry = new THREE.SphereGeometry(8, 32, 32);
+    const moonMaterial = new THREE.MeshStandardMaterial({
+      map: new THREE.TextureLoader().load('moon.jpeg'),
+      roughness: 1,
+      metalness: 0
+    });
+    const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+    // Đặt mặt trăng cách tâm Trái Đất (bán kính Trái Đất của Globe.gl là 100)
+    moonMesh.position.set(160, 20, 0); 
+    moonGroup.add(moonMesh);
+
+    // 3. Tự động xoay Trái Đất
+    const controls = world.controls();
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.0; // Tốc độ chuẩn, 1 vòng mất khoảng 1 phút
+    // Hạn chế góc nhìn camera để không bị lật ngược quả cầu
+    controls.minPolarAngle = Math.PI / 4; 
+    controls.maxPolarAngle = Math.PI / 1.5; 
+
+    // Vòng lặp Animation tùy chỉnh cho Mặt Trăng
+    (function animate() {
+      // Trái Đất và Camera được handle bởi controls.update()
+      // Ta chỉ cần cập nhật góc quay của group Mặt Trăng
+      moonGroup.rotation.y += 0.002; // Mặt trăng tự quay quanh quỹ đạo
+      moonMesh.rotation.y += 0.01;   // Mặt trăng tự xoay quanh trục nó
+      requestAnimationFrame(animate);
+    })();
+
+    // Xử lý Dữ liệu
+    Promise.all([
+      // Tải biên giới quốc gia từ CDN
+      fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson').then(r => r.json()),
+      // Đọc file CSV
+      d3.csv('life-expectancy.csv')
+    ]).then(([countriesData, csvData]) => {
+      
+      // Khai thác độ trải dài của năm từ dữ liệu
+      const years = csvData.map(d => parseInt(d.Year)).filter(y => !isNaN(y));
+      const minYear = Math.min(...years);
+      const maxYear = Math.max(...years);
+
+      // Cập nhật Slider HTML
+      const slider = document.getElementById('yearSlider');
+      slider.min = minYear;
+      slider.max = maxYear;
+      slider.value = maxYear;
+      currentYear = maxYear;
+      document.getElementById('year-display').innerText = currentYear;
+
+      // Xử lý mảng CSV thành Object tra cứu nhanh
+      csvData.forEach(row => {
+        const year = row.Year;
+        const code = row.Code;
+        const value = parseFloat(row['Life expectancy']);
+        
+        if (year && code) {
+          if (!lifeDataByYear[year]) lifeDataByYear[year] = {};
+          lifeDataByYear[year][code] = value;
+        }
+      });
+
+      // Đẩy dữ liệu Polygon vào Globe
+      world.polygonsData(countriesData.features)
+           .polygonCapColor(getCountryColor);
+    });
+
+    // Lắng nghe sự kiện UI (Thanh kéo thời gian)
+    const yearSlider = document.getElementById('yearSlider');
+    const yearDisplay = document.getElementById('year-display');
+
+    function updateYear(newYear) {
+      currentYear = parseInt(newYear);
+      yearSlider.value = currentYear;
+      yearDisplay.innerText = currentYear;
+      world.polygonCapColor(getCountryColor); // Render lại màu
+    }
+
+    yearSlider.addEventListener('input', (e) => {
+      updateYear(e.target.value);
+    });
+
+    // Xử lý nút Play / Pause
+    const playBtn = document.getElementById('playBtn');
+    playBtn.addEventListener('click', () => {
+      playing = !playing;
+      if (playing) {
+        playBtn.innerText = "⏸ PAUSE";
+        playBtn.style.background = "#f44336";
+        
+        playInterval = setInterval(() => {
+          let nextYear = currentYear + 1;
+          if (nextYear > parseInt(yearSlider.max)) {
+            nextYear = parseInt(yearSlider.min); // Quay về ban đầu nếu hết
+          }
+          updateYear(nextYear);
+        }, 150); // Tốc độ nhảy năm (150ms / năm)
+      } else {
+        playBtn.innerText = "▶ PLAY";
+        playBtn.style.background = "#4caf50";
+        clearInterval(playInterval);
+      }
+    });
+
+    // Responsive khi thay đổi kích thước cửa sổ
+    window.addEventListener('resize', () => {
+      world.width(window.innerWidth).height(window.innerHeight);
+    });
+  </script>
+</body>
+</html>
