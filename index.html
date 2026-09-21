@@ -26,10 +26,10 @@
 
     .glass-panel {
       position: absolute;
-      background: rgba(13, 17, 23, 0.78);
+      background: rgba(13, 17, 23, 0.82);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 14px;
       color: #ffffff;
       z-index: 10;
@@ -173,10 +173,10 @@
     }
   </style>
 
+  <!-- Bộ thư viện chuẩn -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.28.3/dist/globe.gl.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3-dsv@3.0.1/dist/d3-dsv.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/d3-scale@4.0.2/dist/d3-scale.min.js"></script>
 </head>
 <body>
 
@@ -211,7 +211,7 @@
     <div id="status-badge">● 로딩 중...</div>
   </div>
 
-<script>
+  <script>
     const i18n = {
       ko: {
         title: "전 세계 기대수명",
@@ -243,9 +243,9 @@
     let currentYear = 2023;
     let lifeDataByYear = {};
     let lifeDataByName = {};
+    let geoFeatures = [];
     let isPlaying = false;
     let playTimer = null;
-    let world;
 
     function setLang(target) {
       lang = target;
@@ -261,12 +261,38 @@
       playBtn.innerText = isPlaying ? i18n[lang].pause : i18n[lang].play;
     }
 
-    // Thang màu mượt mà
-    const colorScale = d3.scaleLinear()
-      .domain([25, 45, 60, 72, 80, 85])
-      .range(['#d7191c', '#fdae61', '#ffffbf', '#a6d96a', '#1a9641', '#2b83ba'])
-      .clamp(true);
+    // --- HÀM TÍNH MÀU THUẦN JS (KHÔNG PHỤ THUỘC D3) ---
+    // Đi qua các mốc: 25(Đỏ) -> 45(Cam) -> 60(Vàng) -> 72(Xanh lá nhạt) -> 80(Xanh lục) -> 85(Xanh dương)
+    const colorStops = [
+      { val: 25, r: 215, g: 25,  b: 28  }, // #d7191c
+      { val: 45, r: 253, g: 174, b: 97  }, // #fdae61
+      { val: 60, r: 255, g: 255, b: 191 }, // #ffffbf
+      { val: 72, r: 166, g: 217, b: 106 }, // #a6d96a
+      { val: 80, r: 26,  g: 150, b: 65  }, // #1a9641
+      { val: 85, r: 43,  g: 131, b: 186 }  // #2b83ba
+    ];
 
+    function interpolateColor(val) {
+      if (val <= colorStops[0].val) return `rgb(${colorStops[0].r},${colorStops[0].g},${colorStops[0].b})`;
+      if (val >= colorStops[colorStops.length - 1].val) {
+        const last = colorStops[colorStops.length - 1];
+        return `rgb(${last.r},${last.g},${last.b})`;
+      }
+      for (let i = 0; i < colorStops.length - 1; i++) {
+        const c1 = colorStops[i];
+        const c2 = colorStops[i + 1];
+        if (val >= c1.val && val <= c2.val) {
+          const ratio = (val - c1.val) / (c2.val - c1.val);
+          const r = Math.round(c1.r + ratio * (c2.r - c1.r));
+          const g = Math.round(c1.g + ratio * (c2.g - c1.g));
+          const b = Math.round(c1.b + ratio * (c2.b - c1.b));
+          return `rgb(${r},${g},${b})`;
+        }
+      }
+      return '#2b313e';
+    }
+
+    // Tra cứu giá trị tuổi thọ của quốc gia
     function getCountryValue(feat) {
       const p = feat.properties || {};
       const codes = [p.ISO_A3, p.ADM0_A3, p.GU_A3, p.ISO_A3_EH, feat.id].filter(c => c && c !== '-99');
@@ -278,6 +304,7 @@
         }
       }
 
+      // Fallback tìm theo tên nếu mã ISO bị thiếu
       const nameObj = lifeDataByName[currentYear];
       if (nameObj) {
         const names = [p.NAME, p.ADMIN, p.SOVEREIGNT, p.NAME_LONG].filter(Boolean);
@@ -288,53 +315,98 @@
       return null;
     }
 
-    function calcHexColor(feat) {
+    function calculateCapColor(feat) {
       const val = getCountryValue(feat);
-      return (val !== null && val !== undefined) ? colorScale(val) : '#2b313e';
+      if (val === null || val === undefined) {
+        return 'rgba(43, 49, 62, 0.85)'; // Màu xám tối khi không có số liệu
+      }
+      return interpolateColor(val); // Màu RGB rực rỡ theo tuổi thọ
     }
 
-    // --- HÀM ÉP CẬP NHẬT MÀU TRỰC TIẾP LÊN THREE.JS MATERIAL ---
-    function forceUpdateMaterials() {
-      if (!world) return;
-      
-      // Quét trực tiếp toàn bộ Mesh trong Scene 3D của Three.js
-      world.scene().traverse(obj => {
-        // Kiểm tra đúng polygon mesh có gắn __data
-        if (obj.__data && obj.__data.properties) {
-          const newColor = calcHexColor(obj.__data);
-          obj.__data.__currentColor = newColor;
+    // --- KHỞI TẠO QUẢ CẦU ---
+    const container = document.getElementById('globeViz');
+    const world = Globe()(container)
+      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+      .showAtmosphere(true)
+      .atmosphereColor('#3a7bd5')
+      .atmosphereAltitude(0.2)
+      .polygonAltitude(0.015)
+      .polygonSideColor(() => 'rgba(10, 10, 20, 0.4)')
+      .polygonStrokeColor(() => 'rgba(255, 255, 255, 0.25)')
+      .polygonCapColor(calculateCapColor)
+      .polygonLabel(feat => {
+        const p = feat.properties || {};
+        const name = p.NAME || p.ADMIN || 'Unknown';
+        const val = getCountryValue(feat);
+        
+        const yearTxt = lang === 'ko' ? `${currentYear}${i18n.ko.yearSuffix}` : `${currentYear}`;
+        const valTxt = (val !== null && val !== undefined)
+          ? `<span style="color:#2ea043; font-size:18px; font-weight:bold;">${val.toFixed(1)}${i18n[lang].ageSuffix}</span>`
+          : `<span style="color:#da3633; font-size:14px;">${i18n[lang].nodata}</span>`;
 
-          if (obj.material) {
-            // Trường hợp đa vật liệu (mặt nắp, cạnh sườn)
-            if (Array.isArray(obj.material)) {
-              obj.material.forEach(mat => {
-                mat.color.set(newColor);
-                mat.needsUpdate = true;
-              });
-            } else {
-              obj.material.color.set(newColor);
-              obj.material.needsUpdate = true;
-            }
-          }
-        }
+        return `
+          <div style="background: rgba(13,17,23,0.92); padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); text-align: center; color: #fff;">
+            <div style="font-size: 15px; font-weight: bold; margin-bottom: 4px;">${name}</div>
+            <div style="font-size: 12px; color: #8b949e; margin-bottom: 4px;">${yearTxt}</div>
+            <div>${valTxt}</div>
+          </div>
+        `;
+      })
+      .onPolygonHover(hoverD => {
+        world
+          .polygonAltitude(d => d === hoverD ? 0.05 : 0.015)
+          .polygonCapColor(d => d === hoverD ? '#ffffff' : calculateCapColor(d));
       });
+
+    // --- TỐC ĐỘ XOAY ÊM DỊU ---
+    const controls = world.controls();
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.2;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+
+    // Trục nghiêng 23.5 độ
+    world.scene().rotation.z = (23.5 * Math.PI) / 180;
+
+    // --- BACKGROUND VŨ TRỤ CHUYỂN ĐỘNG SIÊU CHẬM ---
+    const galaxySphereGeo = new THREE.SphereGeometry(900, 32, 32);
+    const galaxyTexture = new THREE.TextureLoader().load('galaxy.jpg');
+    const galaxyMaterial = new THREE.MeshBasicMaterial({
+      map: galaxyTexture,
+      side: THREE.BackSide
+    });
+    const galaxySky = new THREE.Mesh(galaxySphereGeo, galaxyMaterial);
+    world.scene().add(galaxySky);
+
+    (function animateSpace() {
+      galaxySky.rotation.y += 0.000012;
+      requestAnimationFrame(animateSpace);
+    })();
+
+    window.addEventListener('resize', () => {
+      world.width(window.innerWidth).height(window.innerHeight);
+    });
+
+    // --- HÀM ÉP RENDER LẠI TOÀN BỘ MÀU TỨC THÌ ---
+    function triggerColorUpdate() {
+      // Truyền một instance function mới ép Globe.gl giải phóng cache vật liệu cũ
+      world.polygonCapColor(d => calculateCapColor(d));
     }
 
-    // --- TẢI TOÀN BỘ DỮ LIỆU XONG MỚI DỰNG QUẢ CẦU ---
+    // --- TẢI DỮ LIỆU ---
     const statusBadge = document.getElementById('status-badge');
 
     Promise.all([
       fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson').then(r => r.json()),
       fetch('life-expectancy.csv').then(r => r.text())
     ]).then(([geoData, csvText]) => {
-      // 1. Phân giải CSV
       const parsed = d3.csvParse(csvText);
       let minYear = 2023, maxYear = 1950;
 
       parsed.forEach(row => {
         const y = parseInt(row.Year);
-        const c = row.Code ? row.Code.trim() : null;
-        const name = row.Entity ? row.Entity.trim() : null;
+        const c = row.Code;
+        const name = row.Entity;
         const v = parseFloat(row['Life expectancy']);
 
         if (!isNaN(y) && !isNaN(v)) {
@@ -348,93 +420,25 @@
         }
       });
 
-      // 2. Gán sẵn màu ban đầu trực tiếp vào từng feature trước khi render
-      geoData.features.forEach(feat => {
-        feat.__currentColor = calcHexColor(feat);
-      });
-
-      // 3. Khởi tạo Quả Cầu
-      const container = document.getElementById('globeViz');
-      world = Globe()(container)
-        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
-        .showAtmosphere(true)
-        .atmosphereColor('#3a7bd5')
-        .atmosphereAltitude(0.2)
-        .polygonsData(geoData.features)
-        .polygonAltitude(0.015)
-        .polygonCapColor(d => d.__currentColor || '#2b313e')
-        .polygonSideColor(() => 'rgba(10, 10, 20, 0.4)')
-        .polygonStrokeColor(() => 'rgba(255, 255, 255, 0.25)')
-        .polygonLabel(feat => {
-          const p = feat.properties || {};
-          const name = p.NAME || p.ADMIN || 'Unknown';
-          const val = getCountryValue(feat);
-          
-          const yearTxt = lang === 'ko' ? `${currentYear}${i18n.ko.yearSuffix}` : `${currentYear}`;
-          const valTxt = (val !== null && val !== undefined)
-            ? `<span style="color:#2ea043; font-size:18px; font-weight:bold;">${val.toFixed(1)}${i18n[lang].ageSuffix}</span>`
-            : `<span style="color:#da3633; font-size:14px;">${i18n[lang].nodata}</span>`;
-
-          return `
-            <div style="background: rgba(13,17,23,0.92); padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); text-align: center; color: #fff;">
-              <div style="font-size: 15px; font-weight: bold; margin-bottom: 4px;">${name}</div>
-              <div style="font-size: 12px; color: #8b949e; margin-bottom: 4px;">${yearTxt}</div>
-              <div>${valTxt}</div>
-            </div>
-          `;
-        })
-        .onPolygonHover(hoverD => {
-          world
-            .polygonAltitude(d => d === hoverD ? 0.05 : 0.015)
-            .polygonCapColor(d => d === hoverD ? '#ffffff' : (d.__currentColor || '#2b313e'));
-        });
-
-      // Điều khiển góc xoay và tốc độ
-      const controls = world.controls();
-      controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.2;
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.08;
-
-      world.scene().rotation.z = (23.5 * Math.PI) / 180;
-
-      // Background Galaxy siêu chậm
-      const galaxySphereGeo = new THREE.SphereGeometry(900, 32, 32);
-      const galaxyTexture = new THREE.TextureLoader().load('galaxy.jpg');
-      const galaxyMaterial = new THREE.MeshBasicMaterial({
-        map: galaxyTexture,
-        side: THREE.BackSide
-      });
-      const galaxySky = new THREE.Mesh(galaxySphereGeo, galaxyMaterial);
-      world.scene().add(galaxySky);
-
-      (function animateSpace() {
-        galaxySky.rotation.y += 0.000012;
-        requestAnimationFrame(animateSpace);
-      })();
-
-      // Cập nhật Slider
       const slider = document.getElementById('yearSlider');
       slider.min = minYear;
       slider.max = maxYear;
       slider.value = currentYear;
 
-      statusBadge.innerText = i18n[lang].statusReady;
+      geoFeatures = geoData.features;
+      world.polygonsData(geoFeatures);
       
-      // Chạy cưỡng bức đổi màu lần đầu
-      setTimeout(forceUpdateMaterials, 200);
+      // Kích hoạt tô màu ngay khi nạp xong
+      triggerColorUpdate();
 
+      statusBadge.innerText = i18n[lang].statusReady;
     }).catch(err => {
       console.error(err);
-      statusBadge.innerText = "● Hãy chạy qua GitHub Pages để nạp CSV";
+      statusBadge.innerText = "● Hãy chạy qua GitHub Pages hoặc Live Server để nạp CSV";
       statusBadge.style.color = "#d29922";
     });
 
-    window.addEventListener('resize', () => {
-      if (world) world.width(window.innerWidth).height(window.innerHeight);
-    });
-
-    // --- SỰ KIỆN KÉO THANH TRƯỢT & PLAY/PAUSE ---
+    // --- THANH TRƯỢT THỜI GIAN & PLAY/PAUSE ---
     const slider = document.getElementById('yearSlider');
     const yearDisplay = document.getElementById('year-display');
     const playBtn = document.getElementById('playBtn');
@@ -443,8 +447,7 @@
       currentYear = parseInt(val);
       slider.value = currentYear;
       yearDisplay.innerText = currentYear;
-      // Đổi màu ngay lập tức
-      forceUpdateMaterials();
+      triggerColorUpdate();
     }
 
     slider.addEventListener('input', (e) => updateYear(e.target.value));
