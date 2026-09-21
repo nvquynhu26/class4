@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>전 세계 기대수명 / Global Life Expectancy</title>
   <style>
     * { box-sizing: border-box; }
@@ -13,6 +13,7 @@
       background-color: #02040a;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     #globeViz {
@@ -25,7 +26,6 @@
     }
 
     .glass-panel {
-      position: absolute;
       background: rgba(13, 17, 23, 0.85);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
@@ -36,39 +36,53 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
     }
 
-    #title-panel {
-      top: 24px;
-      left: 24px;
-      padding: 16px 22px;
+    /* Thanh điều hướng trên cùng (PC, Tablet & Mobile tự co giãn) */
+    #top-bar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
       pointer-events: none;
+      z-index: 20;
+    }
+
+    #title-panel {
+      padding: 14px 20px;
+      pointer-events: auto;
+      max-width: 65%;
     }
     #title-panel h1 {
-      margin: 0 0 6px 0;
-      font-size: 20px;
+      margin: 0 0 4px 0;
+      font-size: 19px;
       font-weight: 700;
       letter-spacing: -0.02em;
     }
     #title-panel p {
       margin: 0;
-      font-size: 13px;
+      font-size: 12.5px;
       color: #8b949e;
+      line-height: 1.3;
     }
 
     #lang-panel {
-      top: 24px;
-      right: 24px;
       padding: 6px 8px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
+      pointer-events: auto;
+      flex-shrink: 0;
     }
     .lang-btn {
       background: transparent;
       border: none;
       color: #8b949e;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 700;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -78,33 +92,36 @@
       color: #ffffff;
     }
 
+    /* Bảng điều khiển thời gian ở dưới */
     #controls {
-      bottom: 28px;
+      position: absolute;
+      bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      width: 90%;
+      width: 92%;
       max-width: 740px;
-      padding: 16px 24px;
+      padding: 14px 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 12px;
+      z-index: 20;
     }
 
     .metric-toggle-group {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       width: 100%;
       justify-content: center;
-      margin-bottom: 2px;
+      flex-wrap: wrap;
     }
     .metric-btn {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.12);
       color: #8b949e;
-      padding: 7px 20px;
+      padding: 6px 16px;
       border-radius: 20px;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.25s ease;
@@ -124,26 +141,28 @@
       width: 100%;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
     }
 
     .btn-play {
       background: #238636;
       color: white;
       border: none;
-      padding: 9px 20px;
-      border-radius: 24px;
+      padding: 8px 16px;
+      border-radius: 20px;
       cursor: pointer;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12.5px;
       transition: background 0.2s ease;
-      min-width: 110px;
+      min-width: 90px;
+      flex-shrink: 0;
     }
     .btn-play:hover { background: #2ea043; }
     .btn-play.playing { background: #da3633; }
 
     input[type=range] {
       flex-grow: 1;
+      min-width: 0;
       -webkit-appearance: none;
       background: rgba(255, 255, 255, 0.2);
       height: 6px;
@@ -162,24 +181,28 @@
     }
 
     #year-display {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 800;
-      min-width: 75px;
+      min-width: 60px;
       text-align: right;
       font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
     }
 
     .legend-row {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 12px;
+      gap: 10px;
+      font-size: 11.5px;
       color: #8b949e;
+      width: 100%;
+      justify-content: center;
     }
     .color-gradient {
-      width: 260px;
-      height: 10px;
-      border-radius: 5px;
+      flex-grow: 1;
+      max-width: 260px;
+      height: 8px;
+      border-radius: 4px;
       background: linear-gradient(to right, #d7191c, #fdae61, #ffffbf, #a6d96a, #1a9641, #2b83ba);
     }
 
@@ -187,19 +210,21 @@
       font-size: 11px;
       color: #58a6ff;
       margin-top: -4px;
+      text-align: center;
     }
 
-    /* Modal Chi tiết */
+    /* Modal Chi tiết khi Click */
     #detail-modal {
       display: none;
+      position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 90%;
+      width: 92%;
       max-width: 520px;
-      max-height: 88vh;
+      max-height: 85vh;
       overflow-y: auto;
-      padding: 24px;
+      padding: 20px;
       z-index: 50;
       animation: modalFadeIn 0.25s ease-out;
     }
@@ -211,46 +236,47 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
-    .modal-title { font-size: 22px; font-weight: 700; margin: 0; }
-    .modal-meta { font-size: 13px; color: #58a6ff; margin-top: 4px; font-weight: 500; }
+    .modal-title { font-size: 20px; font-weight: 700; margin: 0; }
+    .modal-meta { font-size: 12.5px; color: #58a6ff; margin-top: 3px; font-weight: 500; }
     .btn-close {
       background: rgba(255, 255, 255, 0.1);
       border: none;
       color: #fff;
       border-radius: 50%;
-      width: 30px;
-      height: 30px;
+      width: 28px;
+      height: 28px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 13px;
       transition: background 0.2s;
+      flex-shrink: 0;
     }
     .btn-close:hover { background: rgba(255, 255, 255, 0.25); }
     
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin: 14px 0 10px 0;
+      gap: 8px;
+      margin: 12px 0 10px 0;
     }
     .stat-card {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 9px 10px;
     }
     .stat-label { font-size: 11px; color: #8b949e; }
-    .stat-val { font-size: 16px; font-weight: 700; color: #58a6ff; margin-top: 3px; }
+    .stat-val { font-size: 15px; font-weight: 700; color: #58a6ff; margin-top: 2px; }
     
     .notes-card {
       background: rgba(255, 255, 255, 0.02);
       border: 1px dashed rgba(255, 255, 255, 0.1);
       border-radius: 8px;
-      padding: 8px 12px;
+      padding: 8px 10px;
       font-size: 11px;
       color: #8b949e;
       line-height: 1.4;
@@ -259,11 +285,11 @@
 
     .chart-box {
       width: 100%;
-      height: 150px;
-      margin-top: 12px;
+      height: 140px;
+      margin-top: 10px;
       background: rgba(0, 0, 0, 0.3);
-      border-radius: 10px;
-      padding: 8px;
+      border-radius: 8px;
+      padding: 6px;
       position: relative;
       cursor: crosshair;
     }
@@ -278,9 +304,76 @@
     .chart-hover-readout {
       color: #58a6ff;
       font-weight: 700;
-      font-size: 12px;
+      font-size: 11.5px;
     }
-    .dot-total { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; display: inline-block; margin-right: 4px; }
+    .dot-total { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; display: inline-block; margin-right: 4px; }
+
+    /* ============================================================ */
+    /* RESPONSIVE CSS DÀNH CHO MOBILE & MÀN HÌNH NHỎ (≤ 600px) */
+    /* ============================================================ */
+    @media (max-width: 600px) {
+      #top-bar {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        gap: 8px;
+      }
+      #title-panel {
+        padding: 8px 12px;
+        max-width: 70%;
+        border-radius: 10px;
+      }
+      #title-panel h1 { font-size: 15px; margin-bottom: 2px; }
+      #title-panel p { font-size: 11px; }
+
+      #lang-panel {
+        padding: 4px 6px;
+        border-radius: 10px;
+      }
+      .lang-btn {
+        font-size: 11px;
+        padding: 4px 8px;
+      }
+
+      #controls {
+        bottom: 12px;
+        width: 95%;
+        padding: 10px 14px;
+        gap: 8px;
+        border-radius: 12px;
+      }
+      .metric-btn {
+        font-size: 11px;
+        padding: 4px 10px;
+      }
+      .btn-play {
+        min-width: 75px;
+        padding: 6px 12px;
+        font-size: 11px;
+      }
+      #year-display {
+        font-size: 19px;
+        min-width: 48px;
+      }
+      .legend-row {
+        font-size: 10.5px;
+      }
+      .color-gradient {
+        max-width: 180px;
+        height: 6px;
+      }
+
+      #detail-modal {
+        padding: 15px;
+        width: 95%;
+        border-radius: 12px;
+      }
+      .modal-title { font-size: 17px; }
+      .modal-meta { font-size: 11.5px; }
+      .stats-grid { gap: 6px; }
+      .stat-val { font-size: 13.5px; }
+      .chart-box { height: 120px; }
+    }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
@@ -291,16 +384,20 @@
 
   <div id="globeViz"></div>
 
-  <div id="title-panel" class="glass-panel">
-    <h1 id="txt-title">전 세계 기대수명</h1>
-    <p id="txt-sub">국가를 클릭하면 상세 통계 차트가 표시됩니다</p>
+  <!-- Thanh điều hướng trên cùng (Tự động chống đè lấn) -->
+  <div id="top-bar">
+    <div id="title-panel" class="glass-panel">
+      <h1 id="txt-title">전 세계 기대수명</h1>
+      <p id="txt-sub">국가를 클릭하면 상세 통계 차트가 표시됩니다</p>
+    </div>
+
+    <div id="lang-panel" class="glass-panel">
+      <button id="btn-ko" class="lang-btn active" onclick="setLang('ko')">한국어</button>
+      <button id="btn-en" class="lang-btn" onclick="setLang('en')">English</button>
+    </div>
   </div>
 
-  <div id="lang-panel" class="glass-panel">
-    <button id="btn-ko" class="lang-btn active" onclick="setLang('ko')">한국어</button>
-    <button id="btn-en" class="lang-btn" onclick="setLang('en')">English</button>
-  </div>
-
+  <!-- Bảng điều khiển thời gian ở dưới -->
   <div id="controls" class="glass-panel">
     <div class="metric-toggle-group">
       <button id="btn-metric-life" class="metric-btn active" onclick="setMetric('life')">기대수명</button>
@@ -339,7 +436,7 @@
       </div>
       <div class="stat-card">
         <div id="lbl-income-grp" class="stat-label">소득 분류</div>
-        <div id="val-income" class="stat-val" style="font-size:13.5px; color:#e6edf3;">-</div>
+        <div id="val-income" class="stat-val" style="font-size:13px; color:#e6edf3;">-</div>
       </div>
       <div class="stat-card">
         <div id="lbl-growth" class="stat-label">총 증가폭 (1960 → 2024)</div>
@@ -472,7 +569,6 @@
       updateLegendUI();
 
       if (activeModalCode) {
-        // Cập nhật lại modal nếu đang mở
         const feat = geoFeatures.find(f => (f.properties.ISO_A3 || f.properties.ADM0_A3 || f.id) === activeModalCode);
         if (feat) showCountryDetail(feat);
       }
@@ -638,6 +734,7 @@
       requestAnimationFrame(animateSpace);
     })();
 
+    // Tự động căn chỉnh mượt mà theo mọi kích thước màn hình
     window.addEventListener('resize', () => {
       world.width(window.innerWidth).height(window.innerHeight);
     });
@@ -651,7 +748,7 @@
     }
 
     // ==========================================
-    // POPUP CHI TIẾT & BIỂU ĐỒ SÓNG CÓ TƯƠNG TÁC CHUỘT
+    // POPUP CHI TIẾT & BIỂU ĐỒ SÓNG TƯƠNG TÁC
     // ==========================================
     function showCountryDetail(feat) {
       const p = feat.properties || {};
@@ -721,7 +818,6 @@
       activeModalCode = null;
     }
 
-    // Biểu đồ sóng SVG chỉ thể hiện 1 đường Total thực tế kèm Cursor quét chuột
     function renderInteractiveWaveChart(code) {
       const svg = document.getElementById('trend-chart');
       const readout = document.getElementById('chart-hover-info');
@@ -739,7 +835,7 @@
       const minV = Math.min(...vals) - 2;
       const maxV = Math.max(...vals) + 2;
 
-      const w = 440, h = 130, pad = 24;
+      const w = 440, h = 130, pad = 20;
       const getX = (idx) => pad + (idx / (years.length - 1)) * (w - 2 * pad);
       const getY = (v) => h - pad - ((v - minV) / (maxV - minV)) * (h - 2 * pad);
 
@@ -776,25 +872,22 @@
         <text x="${pad}" y="${h - 6}" fill="#8b949e" font-size="10.5">${startYearTxt}</text>
         <text x="${w - pad}" y="${h - 6}" fill="#8b949e" font-size="10.5" text-anchor="end">${endYearTxt}</text>
         
-        <!-- Đường dóng và điểm quét khi hover chuột -->
         <g id="chart-cursor-group" style="display:none;">
           <line id="cursor-line" x1="0" y1="${pad}" x2="0" y2="${h-pad}" stroke="rgba(255,255,255,0.4)" stroke-width="1" stroke-dasharray="2,2"/>
           <circle id="cursor-dot" r="5" fill="#58a6ff" stroke="#ffffff" stroke-width="2" filter="drop-shadow(0 0 4px #58a6ff)"/>
         </g>
       `;
 
-      // Xử lý sự kiện di chuột quét biểu đồ
       const chartContainer = document.getElementById('chart-container');
       const cursorGroup = document.getElementById('chart-cursor-group');
       const cursorLine = document.getElementById('cursor-line');
       const cursorDot = document.getElementById('cursor-dot');
 
-      chartContainer.onmousemove = function(e) {
+      function handleMove(clientX) {
         const rect = svg.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
+        const mouseX = clientX - rect.left;
         const svgX = (mouseX / rect.width) * w;
 
-        // Tìm điểm dữ liệu gần nhất với tọa độ chuột
         let closest = points[0];
         let minDiff = Math.abs(svgX - closest.x);
         for (let i = 1; i < points.length; i++) {
@@ -813,9 +906,18 @@
 
         const yText = lang === 'ko' ? `${closest.year}년` : `${closest.year}`;
         readout.innerText = `${yText}: ${closest.val.toFixed(2)} ${i18n[lang].ageSuffix}`;
+      }
+
+      chartContainer.onmousemove = (e) => handleMove(e.clientX);
+      chartContainer.ontouchmove = (e) => {
+        if (e.touches.length > 0) handleMove(e.touches[0].clientX);
       };
 
-      chartContainer.onmouseleave = function() {
+      chartContainer.onmouseleave = () => {
+        cursorGroup.style.display = 'none';
+        readout.innerText = i18n[lang].hoverPrompt;
+      };
+      chartContainer.ontouchend = () => {
         cursorGroup.style.display = 'none';
         readout.innerText = i18n[lang].hoverPrompt;
       };
