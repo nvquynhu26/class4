@@ -242,7 +242,8 @@
     let lang = 'ko';
     let currentYear = 2023;
     let lifeDataByYear = {};
-    let lifeDataByName = {}; // Fallback mapping theo tên
+    let lifeDataByName = {};
+    let countriesFeatures = [];
     let isPlaying = false;
     let playTimer = null;
 
@@ -258,16 +259,14 @@
       
       const playBtn = document.getElementById('playBtn');
       playBtn.innerText = isPlaying ? i18n[lang].pause : i18n[lang].play;
-      world.polygonLabel(world.polygonLabel());
     }
 
-    // Thang màu: Đỏ -> Vàng -> Xanh lá -> Xanh dương
+    // Thang màu
     const colorScale = d3.scaleLinear()
       .domain([25, 45, 60, 72, 80, 85])
       .range(['#d7191c', '#fdae61', '#ffffbf', '#a6d96a', '#1a9641', '#2b83ba'])
       .clamp(true);
 
-    // Tìm giá trị dữ liệu chính xác cho polygon
     function getCountryValue(feat) {
       const p = feat.properties || {};
       const codes = [p.ISO_A3, p.ADM0_A3, p.GU_A3, p.ISO_A3_EH, feat.id].filter(c => c && c !== '-99');
@@ -279,7 +278,6 @@
         }
       }
 
-      // Fallback tra theo tên quốc gia
       const nameObj = lifeDataByName[currentYear];
       if (nameObj) {
         const names = [p.NAME, p.ADMIN, p.SOVEREIGNT, p.NAME_LONG].filter(Boolean);
@@ -288,14 +286,6 @@
         }
       }
       return null;
-    }
-
-    function getFeatureColor(feat) {
-      const val = getCountryValue(feat);
-      if (val === null || val === undefined) {
-        return '#2b313e'; // Màu xám khi thiếu số liệu
-      }
-      return colorScale(val);
     }
 
     // --- KHỞI TẠO QUẢ CẦU ---
@@ -307,8 +297,8 @@
       .atmosphereAltitude(0.2)
       .polygonAltitude(0.015)
       .polygonSideColor(() => 'rgba(10, 10, 20, 0.4)')
-      .polygonStrokeColor(() => 'rgba(255, 255, 255, 0.2)')
-      .polygonCapColor(getFeatureColor)
+      .polygonStrokeColor(() => 'rgba(255, 255, 255, 0.25)')
+      .polygonCapColor(feat => feat.__currentColor || '#2b313e') // Đọc trực tiếp từ thuộc tính màu đã tính
       .polygonLabel(feat => {
         const p = feat.properties || {};
         const name = p.NAME || p.ADMIN || 'Unknown';
@@ -330,32 +320,31 @@
       .onPolygonHover(hoverD => {
         world
           .polygonAltitude(d => d === hoverD ? 0.05 : 0.015)
-          .polygonCapColor(d => d === hoverD ? '#ffffff' : getFeatureColor(d));
+          .polygonCapColor(d => d === hoverD ? '#ffffff' : (d.__currentColor || '#2b313e'));
       });
 
-    // --- TỐC ĐỘ QUAY TRÁI ĐẤT (GIẢM 3 LẦN) ---
+    // --- TỐC ĐỘ QUAY TRÁI ĐẤT ---
     const controls = world.controls();
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.35; // Giảm 3x so với trước (1.0 -> 0.35), quay rất êm
+    controls.autoRotateSpeed = 0.2; // Rất êm dịu, không chóng mặt
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
 
-    // Trục nghiêng 23.5 độ của Trái Đất
+    // Trục nghiêng 23.5 độ
     world.scene().rotation.z = (23.5 * Math.PI) / 180;
 
-    // --- TẠO BACKGROUND KHÔNG GIAN GALAXY 3D (QUAY CHẬM HƠN 10 LẦN) ---
+    // --- BACKGROUND GALAXY (GIẢM THÊM 10 LẦN - GẦN NHƯ TĨNH LẶNG) ---
     const galaxySphereGeo = new THREE.SphereGeometry(900, 32, 32);
     const galaxyTexture = new THREE.TextureLoader().load('galaxy.jpg');
     const galaxyMaterial = new THREE.MeshBasicMaterial({
       map: galaxyTexture,
-      side: THREE.BackSide // Nhìn từ tâm quả cầu ra ngoài
+      side: THREE.BackSide
     });
     const galaxySky = new THREE.Mesh(galaxySphereGeo, galaxyMaterial);
     world.scene().add(galaxySky);
 
-    // Vòng lặp xoay background cực chậm (chậm hơn Trái Đất 10 lần)
     (function animateSpace() {
-      galaxySky.rotation.y += 0.00012; // Cực kỳ mượt và thư thái
+      galaxySky.rotation.y += 0.000012; // Siêu chậm, hoàn toàn thư thái
       requestAnimationFrame(animateSpace);
     })();
 
@@ -363,7 +352,18 @@
       world.width(window.innerWidth).height(window.innerHeight);
     });
 
-    // --- TẢI VÀ ĐỒNG BỘ DỮ LIỆU ---
+    // --- HÀM TÔ MÀU BẮT BUỘC RENDER LẠI TOÀN BỘ VẬT LIỆU ---
+    function refreshColors() {
+      if (!countriesFeatures.length) return;
+      countriesFeatures.forEach(feat => {
+        const val = getCountryValue(feat);
+        feat.__currentColor = (val !== null && val !== undefined) ? colorScale(val) : '#2b313e';
+      });
+      // Ép Globe.gl tạo lại material mới để đổi màu ngay lập tức
+      world.polygonsData([...countriesFeatures]);
+    }
+
+    // --- TẢI DỮ LIỆU ---
     const statusBadge = document.getElementById('status-badge');
 
     Promise.all([
@@ -395,14 +395,13 @@
       slider.max = maxYear;
       slider.value = currentYear;
 
-      // Nạp features và tô màu toàn bộ các nước
-      world.polygonsData(geoData.features);
-      world.polygonCapColor(getFeatureColor);
+      countriesFeatures = geoData.features;
+      refreshColors();
 
       statusBadge.innerText = i18n[lang].statusReady;
     }).catch(err => {
       console.error(err);
-      statusBadge.innerText = "● Hãy tải trang qua GitHub Pages để nạp đầy đủ màu sắc";
+      statusBadge.innerText = "● Hãy chạy qua GitHub Pages hoặc Live Server để nạp CSV";
       statusBadge.style.color = "#d29922";
     });
 
@@ -415,7 +414,7 @@
       currentYear = parseInt(val);
       slider.value = currentYear;
       yearDisplay.innerText = currentYear;
-      world.polygonCapColor(getFeatureColor);
+      refreshColors();
     }
 
     slider.addEventListener('input', (e) => updateYear(e.target.value));
