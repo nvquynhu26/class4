@@ -26,7 +26,7 @@
 
     .glass-panel {
       position: absolute;
-      background: rgba(13, 17, 23, 0.82);
+      background: rgba(13, 17, 23, 0.85);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -91,7 +91,6 @@
       gap: 12px;
     }
 
-    /* 3 Nút chọn chỉ số */
     .metric-toggle-group {
       display: flex;
       gap: 10px;
@@ -103,9 +102,9 @@
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.12);
       color: #8b949e;
-      padding: 7px 18px;
+      padding: 7px 20px;
       border-radius: 20px;
-      font-size: 12.5px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.25s ease;
@@ -173,27 +172,15 @@
     .legend-row {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       font-size: 12px;
       color: #8b949e;
     }
     .color-gradient {
-      width: 220px;
+      width: 260px;
       height: 10px;
       border-radius: 5px;
       background: linear-gradient(to right, #d7191c, #fdae61, #ffffbf, #a6d96a, #1a9641, #2b83ba);
-    }
-    .no-data-indicator {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-left: 14px;
-    }
-    .no-data-box {
-      width: 14px;
-      height: 10px;
-      background: #2b313e;
-      border-radius: 2px;
     }
 
     #status-badge {
@@ -202,15 +189,17 @@
       margin-top: -4px;
     }
 
-    /* Bảng chi tiết khi Click vào quốc gia */
+    /* Modal Chi tiết khi Click */
     #detail-modal {
       display: none;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       width: 90%;
-      max-width: 480px;
-      padding: 22px 24px;
+      max-width: 520px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 24px;
       z-index: 50;
       animation: modalFadeIn 0.25s ease-out;
     }
@@ -222,17 +211,17 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
-    .modal-title { font-size: 20px; font-weight: 700; margin: 0; }
-    .modal-meta { font-size: 12px; color: #8b949e; margin-top: 4px; }
+    .modal-title { font-size: 22px; font-weight: 700; margin: 0; }
+    .modal-meta { font-size: 13px; color: #58a6ff; margin-top: 4px; font-weight: 500; }
     .btn-close {
       background: rgba(255, 255, 255, 0.1);
       border: none;
       color: #fff;
       border-radius: 50%;
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -246,22 +235,32 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      margin: 14px 0;
+      margin: 14px 0 10px 0;
     }
     .stat-card {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 8px;
-      padding: 10px;
+      padding: 10px 12px;
     }
     .stat-label { font-size: 11px; color: #8b949e; }
-    .stat-val { font-size: 17px; font-weight: 700; color: #58a6ff; margin-top: 2px; }
+    .stat-val { font-size: 16px; font-weight: 700; color: #58a6ff; margin-top: 3px; }
+    
+    .notes-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: #8b949e;
+      line-height: 1.4;
+      margin-top: 8px;
+    }
 
-    /* Vùng đồ họa sóng cực quang */
     .chart-box {
       width: 100%;
       height: 140px;
-      margin-top: 10px;
+      margin-top: 12px;
       background: rgba(0, 0, 0, 0.25);
       border-radius: 10px;
       padding: 8px;
@@ -300,11 +299,11 @@
   </div>
 
   <div id="controls" class="glass-panel">
-    <!-- 3 Nút chọn chỉ số -->
+    <!-- 3 Nút chọn chỉ số: Đổi hoàn toàn theo ngôn ngữ -->
     <div class="metric-toggle-group">
-      <button id="btn-metric-life" class="metric-btn active" onclick="setMetric('life')">기대수명 (Life Expectancy)</button>
-      <button id="btn-metric-birth" class="metric-btn" onclick="setMetric('birth')">출생률 (Birth Rate)</button>
-      <button id="btn-metric-death" class="metric-btn" onclick="setMetric('death')">사망률 (Death Rate)</button>
+      <button id="btn-metric-life" class="metric-btn active" onclick="setMetric('life')">기대수명</button>
+      <button id="btn-metric-birth" class="metric-btn" onclick="setMetric('birth')">출생률</button>
+      <button id="btn-metric-death" class="metric-btn" onclick="setMetric('death')">사망률</button>
     </div>
 
     <div class="slider-row">
@@ -317,10 +316,6 @@
       <span id="txt-low">낮음 (25세)</span>
       <div class="color-gradient"></div>
       <span id="txt-high">높음 (85세+)</span>
-      <div class="no-data-indicator">
-        <div class="no-data-box"></div>
-        <span id="txt-nodata">데이터 없음</span>
-      </div>
     </div>
     <div id="status-badge">● 로딩 중...</div>
   </div>
@@ -342,11 +337,20 @@
       </div>
       <div class="stat-card">
         <div id="lbl-income-grp" class="stat-label">소득 분류</div>
-        <div id="val-income" class="stat-val" style="font-size:14px; color:#e6edf3;">-</div>
+        <div id="val-income" class="stat-val" style="font-size:13.5px; color:#e6edf3;">-</div>
+      </div>
+      <div class="stat-card">
+        <div id="lbl-growth" class="stat-label">총 성장치 (1960 → 2024)</div>
+        <div id="val-growth" class="stat-val" style="color:#2ea043;">-</div>
+      </div>
+      <div class="stat-card">
+        <div id="lbl-peak" class="stat-label">역대 최고 기록</div>
+        <div id="val-peak" class="stat-val" style="color:#f59e0b;">-</div>
       </div>
     </div>
 
-    <!-- Biểu đồ sóng phát sáng SVG -->
+    <div id="modal-notes" class="notes-card" style="display:none;"></div>
+
     <div class="chart-box">
       <svg id="trend-chart" width="100%" height="100%" viewBox="0 0 420 120" preserveAspectRatio="none"></svg>
     </div>
@@ -375,11 +379,27 @@
         mDeath: "사망률",
         currVal: "기준년도 수치",
         income: "소득 분류",
-        region: "지역",
+        growth: "총 증가폭 (1960 → 2024)",
+        peak: "역대 최고치",
         female: "여성 (추정)",
         male: "남성 (추정)",
         total: "전체",
-        statusReady: "● 데이터 연결 완료 (1960-2024)"
+        statusReady: "● 데이터 연결 완료 (1960-2024)",
+        incomeMap: {
+          "High income": "고소득 국가",
+          "Upper middle income": "중상위 소득 국가",
+          "Lower middle income": "중하위 소득 국가",
+          "Low income": "저소득 국가"
+        },
+        regionMap: {
+          "Latin America & Caribbean": "라틴아메리카 및 카리브해",
+          "Middle East & North Africa": "중동 및 북아프리카",
+          "Sub-Saharan Africa": "사하라 이남 아프리카",
+          "Europe & Central Asia": "유럽 및 중앙아시아",
+          "East Asia & Pacific": "동아시아 및 태평양",
+          "South Asia": "남아시아",
+          "North America": "북미"
+        }
       },
       en: {
         title: "Global Life Expectancy",
@@ -397,19 +417,35 @@
         mDeath: "Death Rate",
         currVal: "Current Value",
         income: "Income Group",
-        region: "Region",
+        growth: "Net Growth (1960 → 2024)",
+        peak: "All-Time Peak",
         female: "Female (est.)",
         male: "Male (est.)",
         total: "Total",
-        statusReady: "● Dataset connected (1960-2024)"
+        statusReady: "● Dataset connected (1960-2024)",
+        incomeMap: {
+          "High income": "High Income",
+          "Upper middle income": "Upper Middle Income",
+          "Lower middle income": "Lower Middle Income",
+          "Low income": "Low Income"
+        },
+        regionMap: {
+          "Latin America & Caribbean": "Latin America & Caribbean",
+          "Middle East & North Africa": "Middle East & North Africa",
+          "Sub-Saharan Africa": "Sub-Saharan Africa",
+          "Europe & Central Asia": "Europe & Central Asia",
+          "East Asia & Pacific": "East Asia & Pacific",
+          "South Asia": "South Asia",
+          "North America": "North America"
+        }
       }
     };
 
     let lang = 'ko';
-    let currentMetric = 'life'; // 'life', 'birth', 'death'
+    let currentMetric = 'life';
     let currentYear = 2024;
-    let timeSeriesByCode = {}; // { CODE: { 1960: val, ... 2024: val } }
-    let countryMetadata = {};   // { CODE: { Region, IncomeGroup } }
+    let timeSeriesByCode = {};
+    let countryMetadata = {};
     let geoFeatures = [];
     let isPlaying = false;
     let playTimer = null;
@@ -420,7 +456,12 @@
       document.getElementById('btn-en').classList.toggle('active', target === 'en');
       document.getElementById('txt-title').innerText = i18n[lang].title;
       document.getElementById('txt-sub').innerText = i18n[lang].sub;
-      document.getElementById('txt-nodata').innerText = i18n[lang].nodata;
+      
+      // Đổi tên 3 nút chỉ số
+      document.getElementById('btn-metric-life').innerText = i18n[lang].mLife;
+      document.getElementById('btn-metric-birth').innerText = i18n[lang].mBirth;
+      document.getElementById('btn-metric-death').innerText = i18n[lang].mDeath;
+
       document.getElementById('lbl-female').innerText = i18n[lang].female;
       document.getElementById('lbl-male').innerText = i18n[lang].male;
       document.getElementById('lbl-total').innerText = i18n[lang].total;
@@ -454,7 +495,6 @@
       }
     }
 
-    // --- HÀM NỘI SUY MÀU CHO CÁC CHỈ SỐ ---
     function getColorForMetric(val) {
       if (val === null || val === undefined || isNaN(val)) return '#2b313e';
       
@@ -476,7 +516,7 @@
           { val: 38, r: 253, g: 174, b: 97  },
           { val: 48, r: 215, g: 25,  b: 28  }
         ];
-      } else { // death
+      } else {
         stops = [
           { val: 4,  r: 43,  g: 131, b: 186 },
           { val: 8,  r: 166, g: 217, b: 106 },
@@ -518,10 +558,8 @@
       }
       if (baseVal === null) return null;
 
-      // Tính toán giá trị tương ứng với từng chỉ số
       if (currentMetric === 'life') return baseVal;
       if (currentMetric === 'birth') {
-        // Tỷ lệ sinh ước tính nghịch biến tự nhiên với mức độ phát triển & tuổi thọ
         return Math.max(8, Math.min(48, (88 - baseVal) * 0.72));
       }
       if (currentMetric === 'death') {
@@ -588,8 +626,9 @@
     const galaxySky = new THREE.Mesh(galaxySphereGeo, galaxyMaterial);
     world.scene().add(galaxySky);
 
+    // BACKGROUND GALAXY: GIẢM CHẬM THÊM 5 LẦN (TĨNH LẶNG TUYỆT ĐỐI)
     (function animateSpace() {
-      galaxySky.rotation.y += 0.000012;
+      galaxySky.rotation.y += 0.0000024;
       requestAnimationFrame(animateSpace);
     })();
 
@@ -606,25 +645,66 @@
     }
 
     // ==========================================
-    // POPUP CHI TIẾT & BIỂU ĐỒ SÓNG CỰC QUANG
+    // POPUP CHI TIẾT ĐA DỮ LIỆU TỪ METADATA
     // ==========================================
     function showCountryDetail(feat) {
       const p = feat.properties || {};
       const code = p.ISO_A3 || p.ADM0_A3 || feat.id;
       const name = p.NAME || p.ADMIN || code;
       const meta = countryMetadata[code] || {};
-      const region = meta.Region || p.REGION_UN || 'Global';
-      const income = meta.IncomeGroup || 'Not Classified';
+      
+      const rawRegion = meta.Region || p.REGION_UN || 'Global';
+      const rawIncome = meta.IncomeGroup || 'Not Classified';
+      
+      const regionText = (i18n[lang].regionMap && i18n[lang].regionMap[rawRegion]) || rawRegion;
+      const incomeText = (i18n[lang].incomeMap && i18n[lang].incomeMap[rawIncome]) || rawIncome;
 
       document.getElementById('modal-country-name').innerText = name;
-      document.getElementById('modal-country-meta').innerText = `${code} • ${region}`;
+      document.getElementById('modal-country-meta').innerText = `${code} • ${regionText}`;
       document.getElementById('lbl-curr-val').innerText = `${i18n[lang].currVal} (${currentYear})`;
       document.getElementById('lbl-income-grp').innerText = i18n[lang].income;
-      document.getElementById('val-income').innerText = income;
+      document.getElementById('lbl-growth').innerText = i18n[lang].growth;
+      document.getElementById('lbl-peak').innerText = i18n[lang].peak;
+      document.getElementById('val-income').innerText = incomeText;
 
       const currVal = getCountryValue(feat, currentYear);
       const suffix = currentMetric === 'life' ? i18n[lang].ageSuffix : i18n[lang].rateSuffix;
       document.getElementById('val-current').innerText = currVal ? `${currVal.toFixed(1)}${suffix}` : i18n[lang].nodata;
+
+      // Tính toán Net Growth và Peak All-time
+      const series = timeSeriesByCode[code];
+      if (series) {
+        const years = Object.keys(series).map(Number).sort((a,b) => a - b);
+        const firstVal = series[years[0]];
+        const lastVal = series[years[years.length - 1]];
+        if (firstVal && lastVal) {
+          const diff = (lastVal - firstVal).toFixed(1);
+          const sign = diff >= 0 ? '+' : '';
+          document.getElementById('val-growth').innerText = `${sign}${diff} ${i18n[lang].ageSuffix}`;
+          document.getElementById('val-growth').style.color = diff >= 0 ? '#2ea043' : '#da3633';
+        }
+
+        let peakVal = -1, peakYr = 0;
+        years.forEach(y => {
+          if (series[y] > peakVal) {
+            peakVal = series[y];
+            peakYr = y;
+          }
+        });
+        document.getElementById('val-peak').innerText = `${peakVal.toFixed(1)}${i18n[lang].ageSuffix} (${peakYr})`;
+      } else {
+        document.getElementById('val-growth').innerText = '-';
+        document.getElementById('val-peak').innerText = '-';
+      }
+
+      // Trích xuất ghi chú đặc thù (SpecialNotes) từ metadata nếu có
+      const notesEl = document.getElementById('modal-notes');
+      if (meta.SpecialNotes && meta.SpecialNotes.trim().length > 0) {
+        notesEl.style.display = 'block';
+        notesEl.innerText = `Note: ${meta.SpecialNotes}`;
+      } else {
+        notesEl.style.display = 'none';
+      }
 
       drawWaveChart(code);
       document.getElementById('detail-modal').style.display = 'block';
@@ -650,7 +730,6 @@
       const maxV = Math.max(...vals) + 3;
 
       const w = 420, h = 120, pad = 20;
-
       const getX = (idx) => pad + (idx / (years.length - 1)) * (w - 2 * pad);
       const getY = (v) => h - pad - ((v - minV) / (maxV - minV)) * (h - 2 * pad);
 
@@ -659,8 +738,8 @@
 
       years.forEach((y, i) => {
         const v = series[y];
-        const vF = v + 3.8; // Ước tính nữ giới
-        const vM = Math.max(20, v - 3.8); // Ước tính nam giới
+        const vF = v + 3.8;
+        const vM = Math.max(20, v - 3.8);
 
         const x = getX(i);
         const yT = getY(v);
@@ -687,19 +766,12 @@
             <stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>
           </linearGradient>
         </defs>
-        <!-- Trục mờ ngang -->
         <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
         <line x1="${pad}" y1="${pad}" x2="${w-pad}" y2="${pad}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3"/>
-        
-        <!-- Vùng đổ bóng Gradient mờ -->
         <path d="${areaTotal}" fill="url(#waveGrad)"/>
-        
-        <!-- 3 Đường cong phát sáng -->
         <path d="${pathFemale}" fill="none" stroke="#f43f5e" stroke-width="1.8" stroke-dasharray="4,3" opacity="0.85"/>
         <path d="${pathMale}" fill="none" stroke="#38bdf8" stroke-width="1.8" stroke-dasharray="4,3" opacity="0.85"/>
         <path d="${pathTotal}" fill="none" stroke="#22c55e" stroke-width="2.5" filter="drop-shadow(0 0 5px rgba(34,197,94,0.6))"/>
-        
-        <!-- Nhãn mốc năm -->
         <text x="${pad}" y="${h - 5}" fill="#8b949e" font-size="10">${years[0]}</text>
         <text x="${w - pad}" y="${h - 5}" fill="#8b949e" font-size="10" text-anchor="end">${years[years.length - 1]}</text>
       `;
@@ -716,7 +788,7 @@
       fetch('Metadata_Country_API_SP.DYN.LE00.IN_DS2_en_csv_v2_399797.csv').then(r => r.text()).catch(() => "")
     ]).then(([geoData, csvLife, csvMetaCountry]) => {
       
-      // 1. Parse Metadata Quốc gia (Khu vực, Nhóm thu nhập)
+      // Parse Metadata mở rộng (Region, IncomeGroup, SpecialNotes)
       if (csvMetaCountry) {
         const metaRows = d3.csvParse(csvMetaCountry);
         metaRows.forEach(r => {
@@ -724,19 +796,18 @@
           if (code) {
             countryMetadata[code] = {
               Region: r['Region'],
-              IncomeGroup: r['IncomeGroup']
+              IncomeGroup: r['IncomeGroup'],
+              SpecialNotes: r['SpecialNotes']
             };
           }
         });
       }
 
-      // 2. Parse File Tuổi thọ World Bank (bỏ qua các dòng metadata đầu file)
       const lines = csvLife.split(/\r?\n/);
       const headerIdx = lines.findIndex(l => l.includes('"Country Code"') || l.includes('Country Code'));
       const cleanCsv = headerIdx >= 0 ? lines.slice(headerIdx).join('\n') : csvLife;
       const parsedLife = d3.csvParse(cleanCsv);
 
-      // Tìm các cột năm (ví dụ: '1960', ..., '2024')
       const sampleRow = parsedLife[0] || {};
       const yearCols = Object.keys(sampleRow).filter(k => /^\d{4}$/.test(k) && Number(k) <= 2024).sort((a,b) => a - b);
 
@@ -753,7 +824,6 @@
         });
       });
 
-      // Cấu hình Slider thời gian
       currentYear = maxYear;
       const slider = document.getElementById('yearSlider');
       slider.min = minYear;
