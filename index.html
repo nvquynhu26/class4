@@ -36,7 +36,6 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
     }
 
-    /* Thanh điều hướng trên cùng (PC, Tablet & Mobile tự co giãn) */
     #top-bar {
       position: absolute;
       top: 16px;
@@ -92,7 +91,6 @@
       color: #ffffff;
     }
 
-    /* Bảng điều khiển thời gian ở dưới */
     #controls {
       position: absolute;
       bottom: 24px;
@@ -213,7 +211,7 @@
       text-align: center;
     }
 
-    /* Modal Chi tiết khi Click */
+    /* Modal Chi tiết */
     #detail-modal {
       display: none;
       position: absolute;
@@ -308,66 +306,23 @@
     }
     .dot-total { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; display: inline-block; margin-right: 4px; }
 
-    /* ============================================================ */
-    /* RESPONSIVE CSS DÀNH CHO MOBILE & MÀN HÌNH NHỎ (≤ 600px) */
-    /* ============================================================ */
     @media (max-width: 600px) {
-      #top-bar {
-        top: 10px;
-        left: 10px;
-        right: 10px;
-        gap: 8px;
-      }
-      #title-panel {
-        padding: 8px 12px;
-        max-width: 70%;
-        border-radius: 10px;
-      }
+      #top-bar { top: 10px; left: 10px; right: 10px; gap: 8px; }
+      #title-panel { padding: 8px 12px; max-width: 70%; border-radius: 10px; }
       #title-panel h1 { font-size: 15px; margin-bottom: 2px; }
       #title-panel p { font-size: 11px; }
 
-      #lang-panel {
-        padding: 4px 6px;
-        border-radius: 10px;
-      }
-      .lang-btn {
-        font-size: 11px;
-        padding: 4px 8px;
-      }
+      #lang-panel { padding: 4px 6px; border-radius: 10px; }
+      .lang-btn { font-size: 11px; padding: 4px 8px; }
 
-      #controls {
-        bottom: 12px;
-        width: 95%;
-        padding: 10px 14px;
-        gap: 8px;
-        border-radius: 12px;
-      }
-      .metric-btn {
-        font-size: 11px;
-        padding: 4px 10px;
-      }
-      .btn-play {
-        min-width: 75px;
-        padding: 6px 12px;
-        font-size: 11px;
-      }
-      #year-display {
-        font-size: 19px;
-        min-width: 48px;
-      }
-      .legend-row {
-        font-size: 10.5px;
-      }
-      .color-gradient {
-        max-width: 180px;
-        height: 6px;
-      }
+      #controls { bottom: 12px; width: 95%; padding: 10px 14px; gap: 8px; border-radius: 12px; }
+      .metric-btn { font-size: 11px; padding: 4px 10px; }
+      .btn-play { min-width: 75px; padding: 6px 12px; font-size: 11px; }
+      #year-display { font-size: 19px; min-width: 48px; }
+      .legend-row { font-size: 10.5px; }
+      .color-gradient { max-width: 180px; height: 6px; }
 
-      #detail-modal {
-        padding: 15px;
-        width: 95%;
-        border-radius: 12px;
-      }
+      #detail-modal { padding: 15px; width: 95%; border-radius: 12px; }
       .modal-title { font-size: 17px; }
       .modal-meta { font-size: 11.5px; }
       .stats-grid { gap: 6px; }
@@ -384,7 +339,6 @@
 
   <div id="globeViz"></div>
 
-  <!-- Thanh điều hướng trên cùng (Tự động chống đè lấn) -->
   <div id="top-bar">
     <div id="title-panel" class="glass-panel">
       <h1 id="txt-title">전 세계 기대수명</h1>
@@ -397,7 +351,6 @@
     </div>
   </div>
 
-  <!-- Bảng điều khiển thời gian ở dưới -->
   <div id="controls" class="glass-panel">
     <div class="metric-toggle-group">
       <button id="btn-metric-life" class="metric-btn active" onclick="setMetric('life')">기대수명</button>
@@ -419,7 +372,7 @@
     <div id="status-badge">● 로딩 중...</div>
   </div>
 
-  <!-- Modal Chi tiết khi Click -->
+  <!-- Modal Chi tiết -->
   <div id="detail-modal" class="glass-panel">
     <div class="modal-header">
       <div>
@@ -460,6 +413,69 @@
   </div>
 
   <script>
+    // --- TỪ ĐIỂN TÊN QUỐC GIA SANG TIẾNG HÀN CHUẨN ---
+    const countryNameKo = {
+      "AFG": "아프가니스탄", "ALB": "알바니아", "DZA": "알제리", "AND": "안도라", "AGO": "앙골라", "ATG": "앤티가 바부다",
+      "ARG": "아르헨티나", "ARM": "아르메니아", "AUS": "호주", "AUT": "오스트리아", "AZE": "아제르바이잔", "BHS": "바하마",
+      "BHR": "바레인", "BGD": "방글라데시", "BRB": "바베이도스", "BLR": "벨라루스", "BEL": "벨기에", "BLZ": "벨리즈",
+      "BEN": "베냉", "BTN": "부탄", "BOL": "볼리비아", "BIH": "보스니아 헤르체고비나", "BWA": "보츠와나", "BRA": "브라질",
+      "BRN": "브루나이", "BGR": "불가리아", "BFA": "부르키나파소", "BDI": "부룬디", "CPV": "카보베르데", "KHM": "캄보디아",
+      "CMR": "카메룬", "CAN": "캐나다", "CAF": "중앙아프리카공화국", "TCD": "차드", "CHL": "칠레", "CHN": "중국",
+      "COL": "콜롬비아", "COM": "코모로", "COG": "콩고공화국", "COD": "민주콩고", "CRI": "코스타리카", "CIV": "코트디부아르",
+      "HRV": "크로아티아", "CUB": "쿠바", "CYP": "키프로스", "CZE": "체코", "DNK": "덴마크", "DJI": "지부티",
+      "DMA": "도미니카", "DOM": "도미니카 공화국", "ECU": "에콰도르", "EGY": "이집트", "SLV": "엘살바도르", "GNQ": "적도기니",
+      "ERI": "에리트레아", "EST": "에스토니아", "SWZ": "에스와티니", "ETH": "에티오피아", "FJI": "피지", "FIN": "핀란드",
+      "FRA": "프랑스", "GAB": "가봉", "GMB": "감비아", "GEO": "조지아", "DEU": "독일", "GHA": "가나",
+      "GRC": "그리스", "GRD": "그레나다", "GTM": "과테말라", "GIN": "기니", "GNB": "기니비사우", "GUY": "가이아나",
+      "HTI": "아이티", "HND": "온두라스", "HUN": "헝가리", "ISL": "아이슬란드", "IND": "인도", "IDN": "인도네시아",
+      "IRN": "이란", "IRQ": "이라크", "IRL": "아일랜드", "ISR": "이스라엘", "ITA": "이탈리아", "JAM": "자메이카",
+      "JPN": "일본", "JOR": "요르단", "KAZ": "카자흐스탄", "KEN": "케냐", "KIR": "키리바시", "PRK": "북한",
+      "KOR": "대한민국", "KWT": "쿠웨이트", "KGZ": "키르기스스탄", "LAO": "라오스", "LVA": "라트비아", "LBN": "레바논",
+      "LSO": "레소토", "LBR": "라이베리아", "LBY": "리비아", "LIE": "리히텐슈타인", "LTU": "리투아니아", "LUX": "룩셈부르크",
+      "MDG": "마다가스카르", "MWI": "말라위", "MYS": "말레이시아", "MDV": "몰디브", "MLI": "말리", "MLT": "몰타",
+      "MHL": "마셜 제도", "MRT": "모리타니", "MUS": "모리셔스", "MEX": "멕시코", "FSM": "미크로네시아", "MDA": "몰도바",
+      "MCO": "모나코", "MNG": "몽골", "MNE": "몬테네그로", "MAR": "모로코", "MOZ": "모잠비크", "MMR": "미얀마",
+      "NAM": "나미비아", "NRU": "나우루", "NPL": "네팔", "NLD": "네덜란드", "NZL": "뉴질랜드", "NIC": "니카라과",
+      "NER": "니제르", "NGA": "나이지리아", "MKD": "북마케도니아", "NOR": "노르웨이", "OMN": "오만", "PAK": "파키스탄",
+      "PLW": "팔라우", "PAN": "파나마", "PNG": "파푸아뉴기니", "PRY": "파라과이", "PER": "페루", "PHL": "필리핀",
+      "POL": "폴란드", "PRT": "포르투갈", "QAT": "카타르", "ROU": "루마니아", "RUS": "러시아", "RWA": "르완다",
+      "WSM": "사모아", "SMR": "산마리노", "STP": "상투메 프린시페", "SAU": "사우디아라비아", "SEN": "세네갈", "SRB": "세르비아",
+      "SYC": "세이셸", "SLE": "시에라리온", "SGP": "싱가포르", "SVK": "슬로바키아", "SVN": "슬로베니아", "SLB": "솔로몬 제도",
+      "SOM": "소말리아", "ZAF": "남아프리카 공화국", "SSD": "남수단", "ESP": "스페인", "LKA": "스리랑카", "SDN": "수단",
+      "SUR": "수리남", "SWE": "스웨덴", "CHE": "스위스", "SYR": "시리아", "TJK": "타지키스탄", "TZA": "탄자니아",
+      "THA": "태국", "TLS": "동티모르", "TGO": "토고", "TON": "통가", "TTO": "트리니다드 토바고", "TUN": "튀니지",
+      "TUR": "튀르키예", "TKM": "투르크메니스탄", "TUV": "투발루", "UGA": "우간다", "UKR": "우크라이나", "ARE": "아랍에미리트",
+      "GBR": "영국", "USA": "미국", "URY": "우루과이", "UZB": "우즈베키스탄", "VUT": "바누아투", "VEN": "베네수엘라",
+      "VNM": "베트남", "PSE": "팔레스타인", "YEM": "예멘", "ZMB": "잠비아", "ZWE": "짐바브웨", "TWN": "대만"
+    };
+
+    // --- HÀM DỊCH TỰ ĐỘNG CÁC ĐOẠN VĂN BẢN GHI CHÚ ĐẶC THÙ (SPECIAL NOTES) SANG TIẾNG HÀN ---
+    function translateNotesToKo(note) {
+      if (!note) return "";
+      let t = note;
+      if (t.includes("A simple multiplier is used to convert the national currencies of EMU members to euros")) {
+        return "유로존(EMU) 회원국의 통화는 고정 환율을 적용하여 유로화로 환산되었습니다. 1999년 1월 1일 이전의 역사적 데이터는 실제 유로화가 아니므로 국가 간 단순 직접 집계 시 차이가 발생할 수 있습니다.";
+      }
+      if (t.includes("The reporting period for national accounts data is designated as either calendar year basis")) {
+        const match = t.match(/fiscal year-end:\s*([^)]+)/);
+        const endMonth = match ? match[1] : "회계연도 기준";
+        return `국민계정 통계 보고 기간이 회계연도(FY, 회계연도 종료일: ${endMonth}) 기준으로 산정되었습니다. 공식 환율과 실제 경제 상황 간의 차이를 보정하기 위해 세계은행 대체 환산 계수(Atlas 방법론)가 적용되었습니다.`;
+      }
+      if (t.includes("The World Bank systematically assesses the appropriateness of official exchange rates")) {
+        return "복수 환율 제도로 인한 왜곡을 방지하고 경제적 실질을 정확히 반영하기 위해 세계은행의 대체 환산 계수(가중평균 환율)가 적용된 국가입니다.";
+      }
+      if (t.includes("Due to the limitations of the Atlas method")) {
+        return "지속적인 고인플레이션으로 인한 Atlas 방법론의 한계로 인해 예외적으로 중상위 소득 국가로 분류되었습니다.";
+      }
+      if (t.includes("stretching from the Red Sea")) {
+        return "아프리카 동남부 26개국 집계 지역 데이터입니다.";
+      }
+      if (t.includes("westernmost point of Africa")) {
+        return "아프리카 서중부 22개국 집계 지역 데이터입니다.";
+      }
+      return "세계은행 개발지표(WDI)의 국가별 경제 통계 보정 기준이 적용된 데이터입니다.";
+    }
+
     const i18n = {
       ko: {
         title: "전 세계 기대수명",
@@ -487,7 +503,8 @@
           "High income": "고소득 국가",
           "Upper middle income": "중상위 소득 국가",
           "Lower middle income": "중하위 소득 국가",
-          "Low income": "저소득 국가"
+          "Low income": "저소득 국가",
+          "Not Classified": "분류 없음"
         },
         regionMap: {
           "Latin America & Caribbean": "라틴아메리카 및 카리브해",
@@ -526,7 +543,8 @@
           "High income": "High Income",
           "Upper middle income": "Upper Middle Income",
           "Lower middle income": "Lower Middle Income",
-          "Low income": "Low Income"
+          "Low income": "Low Income",
+          "Not Classified": "Not Classified"
         },
         regionMap: {
           "Latin America & Caribbean": "Latin America & Caribbean",
@@ -550,6 +568,13 @@
     let isPlaying = false;
     let playTimer = null;
     let activeModalCode = null;
+
+    function getCountryDisplayName(code, rawName) {
+      if (lang === 'ko') {
+        return countryNameKo[code] || rawName;
+      }
+      return rawName;
+    }
 
     function setLang(target) {
       lang = target;
@@ -686,7 +711,9 @@
       .polygonCapColor(d => d.__color || '#2b313e')
       .polygonLabel(feat => {
         const p = feat.properties || {};
-        const name = p.NAME || p.ADMIN || 'Unknown';
+        const code = p.ISO_A3 || p.ADM0_A3 || feat.id;
+        const rawName = p.NAME || p.ADMIN || 'Unknown';
+        const name = getCountryDisplayName(code, rawName);
         const val = getCountryValue(feat);
         const yearTxt = lang === 'ko' ? `${currentYear}${i18n.ko.yearSuffix}` : `${currentYear}`;
         const suffix = currentMetric === 'life' ? i18n[lang].ageSuffix : i18n[lang].rateSuffix;
@@ -734,7 +761,6 @@
       requestAnimationFrame(animateSpace);
     })();
 
-    // Tự động căn chỉnh mượt mà theo mọi kích thước màn hình
     window.addEventListener('resize', () => {
       world.width(window.innerWidth).height(window.innerHeight);
     });
@@ -748,17 +774,18 @@
     }
 
     // ==========================================
-    // POPUP CHI TIẾT & BIỂU ĐỒ SÓNG TƯƠNG TÁC
+    // POPUP CHI TIẾT & BIỂU ĐỒ SÓNG (100% BẢN ĐỊA HÓA)
     // ==========================================
     function showCountryDetail(feat) {
       const p = feat.properties || {};
       const code = p.ISO_A3 || p.ADM0_A3 || feat.id;
       activeModalCode = code;
-      const name = p.NAME || p.ADMIN || code;
+      const rawName = p.NAME || p.ADMIN || code;
+      const name = getCountryDisplayName(code, rawName);
       const meta = countryMetadata[code] || {};
       
       const rawRegion = meta.Region || p.REGION_UN || 'Global';
-      const rawIncome = meta.IncomeGroup || (lang === 'ko' ? '분류 없음' : 'Not Classified');
+      const rawIncome = meta.IncomeGroup || 'Not Classified';
       
       const regionText = (i18n[lang].regionMap && i18n[lang].regionMap[rawRegion]) || rawRegion;
       const incomeText = (i18n[lang].incomeMap && i18n[lang].incomeMap[rawIncome]) || rawIncome;
@@ -801,10 +828,12 @@
         document.getElementById('val-peak').innerText = '-';
       }
 
+      // Xử lý Special Notes: 100% tiếng Hàn khi ở chế độ KO, tiếng Anh khi ở chế độ EN
       const notesEl = document.getElementById('modal-notes');
       if (meta.SpecialNotes && meta.SpecialNotes.trim().length > 0) {
         notesEl.style.display = 'block';
-        notesEl.innerText = `${i18n[lang].notePrefix}${meta.SpecialNotes}`;
+        const translatedContent = lang === 'ko' ? translateNotesToKo(meta.SpecialNotes) : meta.SpecialNotes;
+        notesEl.innerText = `${i18n[lang].notePrefix}${translatedContent}`;
       } else {
         notesEl.style.display = 'none';
       }
