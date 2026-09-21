@@ -368,7 +368,7 @@
     <div id="status-badge">● 로딩 중...</div>
   </div>
 
-  <!-- Modal Chi tiết khi Click (Đã bỏ toàn bộ phần ghi chú) -->
+  <!-- Modal Chi tiết khi Click -->
   <div id="detail-modal" class="glass-panel">
     <div class="modal-header">
       <div>
@@ -543,7 +543,7 @@
     let playTimer = null;
     let activeModalCode = null;
 
-    // Hàm lấy mã ISO chuẩn xác (Lọc bỏ triệt để giá trị '-99' của Pháp và Na Uy)
+    // Lọc bỏ '-99' để tránh lỗi của Pháp và Na Uy
     function getValidCountryCode(feat) {
       const p = feat.properties || {};
       const candidates = [p.ADM0_A3, p.ISO_A3, p.GU_A3, p.ISO_A3_EH, feat.id];
@@ -604,41 +604,45 @@
         highTxt.innerText = `${i18n[lang].high} (85${i18n[lang].ageSuffix}+)`;
       } else if (currentMetric === 'birth') {
         lowTxt.innerText = `${i18n[lang].low} (8‰)`;
-        highTxt.innerText = `${i18n[lang].high} (45‰)`;
+        highTxt.innerText = `${i18n[lang].high} (45‰+)`;
       } else {
         lowTxt.innerText = `${i18n[lang].low} (4‰)`;
-        highTxt.innerText = `${i18n[lang].high} (18‰)`;
+        highTxt.innerText = `${i18n[lang].high} (18‰+)`;
       }
     }
 
+    // --- SỬA CHUẨN XÁC: THANG MÀU ĐỒNG BỘ ĐÚNG CHIỀU VỚI THANH CHÚ GIẢI (ĐỎ = THẤP -> XANH = CAO) ---
     function getColorForMetric(val) {
       if (val === null || val === undefined || isNaN(val)) return '#2b313e';
       
       let stops;
       if (currentMetric === 'life') {
+        // Tuổi thọ thấp = Đỏ, Tuổi thọ cao = Xanh dương
         stops = [
-          { val: 25, r: 215, g: 25,  b: 28  },
-          { val: 45, r: 253, g: 174, b: 97  },
-          { val: 60, r: 255, g: 255, b: 191 },
-          { val: 72, r: 166, g: 217, b: 106 },
-          { val: 80, r: 26,  g: 150, b: 65  },
-          { val: 85, r: 43,  g: 131, b: 186 }
+          { val: 25, r: 215, g: 25,  b: 28  }, // Đỏ
+          { val: 45, r: 253, g: 174, b: 97  }, // Cam
+          { val: 60, r: 255, g: 255, b: 191 }, // Vàng
+          { val: 72, r: 166, g: 217, b: 106 }, // Xanh lá nhạt
+          { val: 80, r: 26,  g: 150, b: 65  }, // Xanh lá đậm
+          { val: 85, r: 43,  g: 131, b: 186 }  // Xanh dương
         ];
       } else if (currentMetric === 'birth') {
+        // Tỷ lệ sinh thấp (Hàn, Nhật: 8-10‰) = Đỏ/Cam cảnh báo, Tỷ lệ sinh cao (35-48‰) = Xanh dương
         stops = [
-          { val: 8,  r: 43,  g: 131, b: 186 },
-          { val: 18, r: 166, g: 217, b: 106 },
-          { val: 28, r: 255, g: 255, b: 191 },
-          { val: 38, r: 253, g: 174, b: 97  },
-          { val: 48, r: 215, g: 25,  b: 28  }
+          { val: 8,  r: 215, g: 25,  b: 28  }, // Đỏ (Báo động thấp)
+          { val: 15, r: 253, g: 174, b: 97  }, // Cam
+          { val: 24, r: 255, g: 255, b: 191 }, // Vàng
+          { val: 34, r: 166, g: 217, b: 106 }, // Xanh lá
+          { val: 45, r: 43,  g: 131, b: 186 }  // Xanh dương
         ];
       } else {
+        // Tỷ lệ tử vong thấp = Đỏ, Tỷ lệ tử vong cao = Xanh dương
         stops = [
-          { val: 4,  r: 43,  g: 131, b: 186 },
-          { val: 8,  r: 166, g: 217, b: 106 },
-          { val: 11, r: 255, g: 255, b: 191 },
-          { val: 14, r: 253, g: 174, b: 97  },
-          { val: 18, r: 215, g: 25,  b: 28  }
+          { val: 4,  r: 215, g: 25,  b: 28  },
+          { val: 7,  r: 253, g: 174, b: 97  },
+          { val: 10, r: 255, g: 255, b: 191 },
+          { val: 14, r: 166, g: 217, b: 106 },
+          { val: 18, r: 43,  g: 131, b: 186 }
         ];
       }
 
@@ -671,7 +675,8 @@
 
       if (currentMetric === 'life') return baseVal;
       if (currentMetric === 'birth') {
-        return Math.max(8, Math.min(48, (88 - baseVal) * 0.72));
+        // Mô phỏng tỷ lệ sinh chuẩn xác: Các nước phát triển, tuổi thọ cao thì tỷ lệ sinh rất thấp
+        return Math.max(7, Math.min(48, (88.5 - baseVal) * 0.72));
       }
       if (currentMetric === 'death') {
         return Math.max(4, Math.min(18, 1000 / baseVal * 0.65));
@@ -844,7 +849,7 @@
 
       years.forEach((y, i) => {
         const vLife = series[y];
-        const vBirth = Math.max(8, Math.min(48, (88 - vLife) * 0.72));
+        const vBirth = Math.max(7, Math.min(48, (88.5 - vLife) * 0.72));
         const vDeath = Math.max(4, Math.min(18, 1000 / vLife * 0.65));
 
         const x = getX(i);
