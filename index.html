@@ -202,6 +202,7 @@
       height: 8px;
       border-radius: 4px;
       background: linear-gradient(to right, #d7191c, #fdae61, #ffffbf, #a6d96a, #1a9641, #2b83ba);
+      transition: background 0.3s ease;
     }
 
     #status-badge {
@@ -362,7 +363,7 @@
     
     <div class="legend-row">
       <span id="txt-low">낮음 (25세)</span>
-      <div class="color-gradient"></div>
+      <div class="color-gradient" id="legend-gradient"></div>
       <span id="txt-high">높음 (85세+)</span>
     </div>
     <div id="status-badge">● 로딩 중...</div>
@@ -543,7 +544,6 @@
     let playTimer = null;
     let activeModalCode = null;
 
-    // Lọc bỏ '-99' để tránh lỗi của Pháp và Na Uy
     function getValidCountryCode(feat) {
       const p = feat.properties || {};
       const candidates = [p.ADM0_A3, p.ISO_A3, p.GU_A3, p.ISO_A3_EH, feat.id];
@@ -599,16 +599,21 @@
     function updateLegendUI() {
       const lowTxt = document.getElementById('txt-low');
       const highTxt = document.getElementById('txt-high');
+      const gradient = document.getElementById('legend-gradient');
+
       if (currentMetric === 'life') {
         lowTxt.innerText = `${i18n[lang].low} (25${i18n[lang].ageSuffix})`;
         highTxt.innerText = `${i18n[lang].high} (85${i18n[lang].ageSuffix}+)`;
+        gradient.style.background = 'linear-gradient(to right, #d7191c, #fdae61, #ffffbf, #a6d96a, #1a9641, #2b83ba)';
       } else if (currentMetric === 'birth') {
         lowTxt.innerText = `${i18n[lang].low} (8‰)`;
         highTxt.innerText = `${i18n[lang].high} (45‰+)`;
+        gradient.style.background = 'linear-gradient(to right, #d7191c, #fdae61, #ffffbf, #a6d96a, #1a9641, #2b83ba)';
       } else {
-        // Tỷ lệ tử vong: Cao (xấu) ở bên trái (màu đỏ), Thấp/Giảm dần (tốt) ở bên phải
-        lowTxt.innerText = `${i18n[lang].high} (18‰+)`;
-        highTxt.innerText = `${i18n[lang].low} (4‰)`;
+        // Tử vong: Thấp (Tốt/Xanh dương) -> Cao (Xấu/Đỏ)
+        lowTxt.innerText = `${i18n[lang].low} (4‰)`;
+        highTxt.innerText = `${i18n[lang].high} (18‰+)`;
+        gradient.style.background = 'linear-gradient(to right, #2b83ba, #1a9641, #a6d96a, #ffffbf, #fdae61, #d7191c)';
       }
     }
 
@@ -617,32 +622,32 @@
       
       let stops;
       if (currentMetric === 'life') {
-        // Tuổi thọ thấp = Đỏ, Tuổi thọ cao = Xanh dương
         stops = [
-          { val: 25, r: 215, g: 25,  b: 28  }, // Đỏ
-          { val: 45, r: 253, g: 174, b: 97  }, // Cam
-          { val: 60, r: 255, g: 255, b: 191 }, // Vàng
-          { val: 72, r: 166, g: 217, b: 106 }, // Xanh lá nhạt
-          { val: 80, r: 26,  g: 150, b: 65  }, // Xanh lá đậm
-          { val: 85, r: 43,  g: 131, b: 186 }  // Xanh dương
+          { val: 25, r: 215, g: 25,  b: 28  },
+          { val: 45, r: 253, g: 174, b: 97  },
+          { val: 60, r: 255, g: 255, b: 191 },
+          { val: 72, r: 166, g: 217, b: 106 },
+          { val: 80, r: 26,  g: 150, b: 65  },
+          { val: 85, r: 43,  g: 131, b: 186 }
         ];
       } else if (currentMetric === 'birth') {
-        // Tỷ lệ sinh thấp (Hàn, Nhật: 8-10‰) = Đỏ/Cam cảnh báo, Tỷ lệ sinh cao (35-48‰) = Xanh dương
         stops = [
-          { val: 8,  r: 215, g: 25,  b: 28  }, // Đỏ (Báo động thấp)
-          { val: 15, r: 253, g: 174, b: 97  }, // Cam
-          { val: 24, r: 255, g: 255, b: 191 }, // Vàng
-          { val: 34, r: 166, g: 217, b: 106 }, // Xanh lá
-          { val: 45, r: 43,  g: 131, b: 186 }  // Xanh dương
+          { val: 8,  r: 215, g: 25,  b: 28  },
+          { val: 15, r: 253, g: 174, b: 97  },
+          { val: 24, r: 255, g: 255, b: 191 },
+          { val: 34, r: 166, g: 217, b: 106 },
+          { val: 45, r: 43,  g: 131, b: 186 }
         ];
       } else {
-        // Tỷ lệ tử vong: Cao (18‰+) = Đỏ (xấu), Thấp (4‰) = Xanh dương (tốt)
+        // SỬA DUY NHẤT Ở MỤC TỬ VONG (사망률):
+        // Thấp (4‰ - Tốt) = Xanh dương -> Cao (18‰ - Xấu/Nguy cơ) = Đỏ
         stops = [
-          { val: 4,  r: 43,  g: 131, b: 186 }, // Xanh dương (Tốt nhất)
-          { val: 7,  r: 166, g: 217, b: 106 }, // Xanh lá
-          { val: 10, r: 255, g: 255, b: 191 }, // Vàng
-          { val: 14, r: 253, g: 174, b: 97  }, // Cam
-          { val: 18, r: 215, g: 25,  b: 28  }  // Đỏ (Báo động xấu)
+          { val: 4,  r: 43,  g: 131, b: 186 }, // Xanh dương (Tốt)
+          { val: 7,  r: 26,  g: 150, b: 65  }, // Xanh lá đậm
+          { val: 10, r: 166, g: 217, b: 106 }, // Xanh lá nhạt
+          { val: 13, r: 255, g: 255, b: 191 }, // Vàng
+          { val: 15, r: 253, g: 174, b: 97  }, // Cam
+          { val: 18, r: 215, g: 25,  b: 28  }  // Đỏ (Xấu)
         ];
       }
 
@@ -675,7 +680,6 @@
 
       if (currentMetric === 'life') return baseVal;
       if (currentMetric === 'birth') {
-        // Mô phỏng tỷ lệ sinh chuẩn xác: Các nước phát triển, tuổi thọ cao thì tỷ lệ sinh rất thấp
         return Math.max(7, Math.min(48, (88.5 - baseVal) * 0.72));
       }
       if (currentMetric === 'death') {
@@ -684,9 +688,6 @@
       return baseVal;
     }
 
-    // ==========================================
-    // KHỞI TẠO THREE.JS VÀ TRÁI ĐẤT (GIỮ NGUYÊN)
-    // ==========================================
     const container = document.getElementById('globeViz');
     const world = Globe()(container)
       .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
@@ -761,9 +762,6 @@
       world.polygonCapColor(d => d.__color);
     }
 
-    // ==========================================
-    // POPUP CHI TIẾT & BIỂU ĐỒ SÓNG (ĐÃ BỎ NOTE)
-    // ==========================================
     function showCountryDetail(feat) {
       const p = feat.properties || {};
       const code = getValidCountryCode(feat);
@@ -945,9 +943,6 @@
       };
     }
 
-    // ==========================================
-    // TẢI VÀ BÓC TÁCH DỮ LIỆU ĐA TỆP
-    // ==========================================
     const statusBadge = document.getElementById('status-badge');
 
     Promise.all([
@@ -1008,9 +1003,6 @@
       statusBadge.style.color = "#d29922";
     });
 
-    // ==========================================
-    // ĐIỀU KHIỂN THỜI GIAN VÀ PHÁT TỰ ĐỘNG
-    // ==========================================
     const slider = document.getElementById('yearSlider');
     const yearDisplay = document.getElementById('year-display');
     const playBtn = document.getElementById('playBtn');
