@@ -606,12 +606,12 @@
         lowTxt.innerText = `${i18n[lang].low} (8‰)`;
         highTxt.innerText = `${i18n[lang].high} (45‰+)`;
       } else {
-        lowTxt.innerText = `${i18n[lang].low} (4‰)`;
-        highTxt.innerText = `${i18n[lang].high} (18‰+)`;
+        // Tỷ lệ tử vong: Cao (xấu) ở bên trái (màu đỏ), Thấp/Giảm dần (tốt) ở bên phải
+        lowTxt.innerText = `${i18n[lang].high} (18‰+)`;
+        highTxt.innerText = `${i18n[lang].low} (4‰)`;
       }
     }
 
-    // --- SỬA CHUẨN XÁC: THANG MÀU ĐỒNG BỘ ĐÚNG CHIỀU VỚI THANH CHÚ GIẢI (ĐỎ = THẤP -> XANH = CAO) ---
     function getColorForMetric(val) {
       if (val === null || val === undefined || isNaN(val)) return '#2b313e';
       
@@ -636,13 +636,13 @@
           { val: 45, r: 43,  g: 131, b: 186 }  // Xanh dương
         ];
       } else {
-        // Tỷ lệ tử vong thấp = Đỏ, Tỷ lệ tử vong cao = Xanh dương
+        // Tỷ lệ tử vong: Cao (18‰+) = Đỏ (xấu), Thấp (4‰) = Xanh dương (tốt)
         stops = [
-          { val: 4,  r: 215, g: 25,  b: 28  },
-          { val: 7,  r: 253, g: 174, b: 97  },
-          { val: 10, r: 255, g: 255, b: 191 },
-          { val: 14, r: 166, g: 217, b: 106 },
-          { val: 18, r: 43,  g: 131, b: 186 }
+          { val: 4,  r: 43,  g: 131, b: 186 }, // Xanh dương (Tốt nhất)
+          { val: 7,  r: 166, g: 217, b: 106 }, // Xanh lá
+          { val: 10, r: 255, g: 255, b: 191 }, // Vàng
+          { val: 14, r: 253, g: 174, b: 97  }, // Cam
+          { val: 18, r: 215, g: 25,  b: 28  }  // Đỏ (Báo động xấu)
         ];
       }
 
