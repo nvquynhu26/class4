@@ -59,6 +59,7 @@
       font-size: 19px;
       font-weight: 700;
       letter-spacing: -0.02em;
+      transition: color 0.2s ease;
     }
     #title-panel p {
       margin: 0;
@@ -212,7 +213,6 @@
       text-align: center;
     }
 
-    /* Modal Chi tiết */
     #detail-modal {
       display: none;
       position: absolute;
@@ -449,7 +449,11 @@
 
     const i18n = {
       ko: {
-        title: "전 세계 기대수명",
+        titles: {
+          life: "전 세계 기대수명",
+          birth: "전 세계 출생률",
+          death: "전 세계 사망률"
+        },
         sub: "국가를 클릭하면 상세 통계 차트가 표시됩니다",
         play: "▶ 재생",
         pause: "⏸ 일시정지",
@@ -466,7 +470,6 @@
         income: "소득 분류",
         growth: "총 증가폭 (1960 → 2024)",
         peak: "역대 최고치",
-        total: "기대수명 추이",
         legLife: "기대수명 (세)",
         legBirth: "출생률 (천명당)",
         legDeath: "사망률 (천명당)",
@@ -491,7 +494,11 @@
         }
       },
       en: {
-        title: "Global Life Expectancy",
+        titles: {
+          life: "Global Life Expectancy",
+          birth: "Global Crude Birth Rate",
+          death: "Global Crude Death Rate"
+        },
         sub: "Click on a country for detailed trend charts",
         play: "▶ PLAY",
         pause: "⏸ PAUSE",
@@ -508,7 +515,6 @@
         income: "Income Group",
         growth: "Net Growth (1960 → 2024)",
         peak: "All-Time Peak",
-        total: "Life Expectancy Trend",
         legLife: "Life Expectancy (yrs)",
         legBirth: "Birth Rate (/1k)",
         legDeath: "Death Rate (/1k)",
@@ -562,11 +568,18 @@
       return rawName;
     }
 
+    function updateHeaderTitle() {
+      const titleText = i18n[lang].titles[currentMetric];
+      document.getElementById('txt-title').innerText = titleText;
+      document.title = `${titleText} — Global Demographics 3D`;
+    }
+
     function setLang(target) {
       lang = target;
       document.getElementById('btn-ko').classList.toggle('active', target === 'ko');
       document.getElementById('btn-en').classList.toggle('active', target === 'en');
-      document.getElementById('txt-title').innerText = i18n[lang].title;
+      
+      updateHeaderTitle();
       document.getElementById('txt-sub').innerText = i18n[lang].sub;
       
       document.getElementById('btn-metric-life').innerText = i18n[lang].mLife;
@@ -592,8 +605,15 @@
       document.getElementById('btn-metric-life').classList.toggle('active', metric === 'life');
       document.getElementById('btn-metric-birth').classList.toggle('active', metric === 'birth');
       document.getElementById('btn-metric-death').classList.toggle('active', metric === 'death');
+      
+      updateHeaderTitle();
       updateLegendUI();
       updateGlobeColors();
+
+      if (activeModalCode) {
+        const feat = geoFeatures.find(f => getValidCountryCode(f) === activeModalCode);
+        if (feat) showCountryDetail(feat);
+      }
     }
 
     function updateLegendUI() {
@@ -610,7 +630,6 @@
         highTxt.innerText = `${i18n[lang].high} (45‰+)`;
         gradient.style.background = 'linear-gradient(to right, #d7191c, #fdae61, #ffffbf, #a6d96a, #1a9641, #2b83ba)';
       } else {
-        // Tử vong: Thấp (Tốt/Xanh dương) -> Cao (Xấu/Đỏ)
         lowTxt.innerText = `${i18n[lang].low} (4‰)`;
         highTxt.innerText = `${i18n[lang].high} (18‰+)`;
         gradient.style.background = 'linear-gradient(to right, #2b83ba, #1a9641, #a6d96a, #ffffbf, #fdae61, #d7191c)';
@@ -639,15 +658,13 @@
           { val: 45, r: 43,  g: 131, b: 186 }
         ];
       } else {
-        // SỬA DUY NHẤT Ở MỤC TỬ VONG (사망률):
-        // Thấp (4‰ - Tốt) = Xanh dương -> Cao (18‰ - Xấu/Nguy cơ) = Đỏ
         stops = [
-          { val: 4,  r: 43,  g: 131, b: 186 }, // Xanh dương (Tốt)
-          { val: 7,  r: 26,  g: 150, b: 65  }, // Xanh lá đậm
-          { val: 10, r: 166, g: 217, b: 106 }, // Xanh lá nhạt
-          { val: 13, r: 255, g: 255, b: 191 }, // Vàng
-          { val: 15, r: 253, g: 174, b: 97  }, // Cam
-          { val: 18, r: 215, g: 25,  b: 28  }  // Đỏ (Xấu)
+          { val: 4,  r: 43,  g: 131, b: 186 },
+          { val: 7,  r: 26,  g: 150, b: 65  },
+          { val: 10, r: 166, g: 217, b: 106 },
+          { val: 13, r: 255, g: 255, b: 191 },
+          { val: 15, r: 253, g: 174, b: 97  },
+          { val: 18, r: 215, g: 25,  b: 28  }
         ];
       }
 
